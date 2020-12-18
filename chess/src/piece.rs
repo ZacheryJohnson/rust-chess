@@ -17,7 +17,7 @@ enum MoveType {
 }
 
 trait Piece {
-  fn get_color(&self) -> Color;
+  fn get_color(&self) -> &Color;
 
   fn get_move_type(&self) -> MoveType;
 
