@@ -1,11 +1,23 @@
+use std::fmt::Display;
+use core::fmt;
+
 type CoordinateDelta = (i8, i8);
 
-enum Color {
+pub enum Color {
   White,
   Black,
 }
 
-enum MoveType {
+impl Display for Color {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.clone() {
+      Color::White => write!(f, "W"),
+      Color::Black => write!(f, "B"),
+    }
+  }
+}
+
+pub enum MoveType {
   /// Linear pieces must stop upon encountering any piece.
   /// All standard chess pieces are linear except the knight.
   Linear,
@@ -16,10 +28,12 @@ enum MoveType {
   Jump,
 }
 
-trait Piece {
+pub trait Piece {
   fn get_color(&self) -> &Color;
 
   fn get_move_type(&self) -> MoveType;
+
+  fn get_short_name(&self) -> &'static str;
 
   /// Returns the legal moves a piece can make in isolation.
   /// This does NOT consider any other pieces - imagine the piece alone on an empty board.
@@ -28,11 +42,19 @@ trait Piece {
   fn get_moves(&self) -> Vec<CoordinateDelta>;
 }
 
-struct Pawn { color: Color}
+pub struct Pawn { color: Color}
+impl Pawn {
+  pub fn new(color: Color) -> Pawn {
+    Pawn { color }
+  }
+}
+
 impl Piece for Pawn {
   fn get_color(&self) -> &Color { &self.color }
 
   fn get_move_type(&self) -> MoveType { MoveType::Linear }
+
+  fn get_short_name(&self) -> &'static str { "P" }
 
   /// Pawns are the only unit where color matters.
   /// Every other piece can move in any direction
@@ -45,11 +67,19 @@ impl Piece for Pawn {
   }
 }
 
-struct Knight { color: Color }
+pub struct Knight { color: Color }
+impl Knight {
+  pub fn new(color: Color) -> Knight {
+    Knight { color }
+  }
+}
+
 impl Piece for Knight {
   fn get_color(&self) -> &Color { &self.color }
 
   fn get_move_type(&self) -> MoveType { MoveType::Jump }
+
+  fn get_short_name(&self) -> &'static str { "K" }
 
   fn get_moves(&self) -> Vec<CoordinateDelta> {
     vec!(
@@ -61,11 +91,19 @@ impl Piece for Knight {
   }
 }
 
-struct Bishop { color: Color }
+pub struct Bishop { color: Color }
+impl Bishop {
+  pub fn new(color: Color) -> Bishop {
+    Bishop { color }
+  }
+}
+
 impl Piece for Bishop {
   fn get_color(&self) -> &Color { &self.color }
 
   fn get_move_type(&self) -> MoveType { MoveType::Linear }
+
+  fn get_short_name(&self) -> &'static str { "B" }
 
   fn get_moves(&self) -> Vec<CoordinateDelta> {
     vec!(
@@ -77,11 +115,19 @@ impl Piece for Bishop {
   }
 }
 
-struct Rook { color: Color }
+pub struct Rook { color: Color }
+impl Rook {
+  pub fn new(color: Color) -> Rook {
+    Rook { color }
+  }
+}
+
 impl Piece for Rook {
   fn get_color(&self) -> &Color { &self.color }
 
   fn get_move_type(&self) -> MoveType { MoveType::Linear }
+
+  fn get_short_name(&self) -> &'static str { "R" }
 
   fn get_moves(&self) -> Vec<CoordinateDelta> {
     vec!(
@@ -93,11 +139,19 @@ impl Piece for Rook {
   }
 }
 
-struct Queen { color: Color }
+pub struct Queen { color: Color }
+impl Queen {
+  pub fn new(color: Color) -> Queen {
+    Queen { color }
+  }
+}
+
 impl Piece for Queen {
   fn get_color(&self) -> &Color { &self.color }
 
   fn get_move_type(&self) -> MoveType { MoveType::Linear }
+
+  fn get_short_name(&self) -> &'static str { "Q" }
 
   fn get_moves(&self) -> Vec<CoordinateDelta> {
     vec!(
@@ -115,11 +169,19 @@ impl Piece for Queen {
   }
 }
 
-struct King { color: Color }
+pub struct King { color: Color }
+impl King {
+  pub fn new(color: Color) -> King {
+    King { color }
+  }
+}
+
 impl Piece for King {
   fn get_color(&self) -> &Color { &self.color }
 
   fn get_move_type(&self) -> MoveType { MoveType::Linear }
+
+  fn get_short_name(&self) -> &'static str { "$" }
 
   fn get_moves(&self) -> Vec<CoordinateDelta> {
     vec!(

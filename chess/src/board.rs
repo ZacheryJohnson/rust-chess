@@ -19,7 +19,8 @@ impl Display for SquareColor {
       SquareColor::Light => write!(f, "L"),
       SquareColor::Dark => write!(f, "D"),
     }
-  }}
+  }
+}
 
 /// Individual square on a [`Board`](`crate::board::Board`). Only has a color.
 pub struct Square {
@@ -41,7 +42,7 @@ impl Square {
   }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub enum Rank {
   One = 1,
   Two = 2,
@@ -68,7 +69,23 @@ impl Into<u8> for Rank {
   }
 }
 
-#[derive(Debug, PartialEq)]
+impl From<u8> for Rank {
+  fn from(x: u8) -> Self {
+    match x {
+      1 => Rank::One,
+      2 => Rank::Two,
+      3 => Rank::Three,
+      4 => Rank::Four,
+      5 => Rank::Five,
+      6 => Rank::Six,
+      7 => Rank::Seven,
+      8 => Rank::Eight,
+      _ => panic!("Tried to convert unknown rank")
+    }
+  }
+}
+
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub enum File {
   A = 1,
   B = 2,
@@ -91,6 +108,22 @@ impl Into<u8> for File {
       File::F => 6,
       File::G => 7,
       File::H => 8,
+    }
+  }
+}
+
+impl From<u8> for File {
+  fn from(x: u8) -> Self {
+    match x {
+      1 => File::A,
+      2 => File::B,
+      3 => File::C,
+      4 => File::D,
+      5 => File::E,
+      6 => File::F,
+      7 => File::G,
+      8 => File::H,
+      _ => panic!("Tried to convert unknown rank")
     }
   }
 }
