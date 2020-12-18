@@ -1,6 +1,6 @@
 use std::{vec};
+use std::fmt;
 use std::fmt::Display;
-use core::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -42,7 +42,7 @@ impl Square {
   }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd)]
 pub enum Rank {
   One = 1,
   Two = 2,
@@ -52,10 +52,27 @@ pub enum Rank {
   Six = 6,
   Seven = 7,
   Eight = 8,
+  Invalid = std::isize::MAX,
 }
 
-impl Into<u8> for Rank {
-  fn into(self) -> u8 {
+impl Display for Rank {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.clone() {
+      Rank::One => write!(f, "1"),
+      Rank::Two => write!(f, "2"),
+      Rank::Three => write!(f, "3"),
+      Rank::Four => write!(f, "4"),
+      Rank::Five => write!(f, "5"),
+      Rank::Six => write!(f, "6"),
+      Rank::Seven => write!(f, "7"),
+      Rank::Eight => write!(f, "8"),
+      Rank::Invalid => write!(f, "!"),
+    }
+  }
+}
+
+impl Into<i8> for Rank {
+  fn into(self) -> i8 {
     match self {
       Rank::One => 1,
       Rank::Two => 2,
@@ -65,12 +82,13 @@ impl Into<u8> for Rank {
       Rank::Six => 6,
       Rank::Seven => 7,
       Rank::Eight => 8,
+      Rank::Invalid => panic!("Trying to put invalid rank into i8"),
     }
   }
 }
 
-impl From<u8> for Rank {
-  fn from(x: u8) -> Self {
+impl From<i8> for Rank {
+  fn from(x: i8) -> Self {
     match x {
       1 => Rank::One,
       2 => Rank::Two,
@@ -80,12 +98,12 @@ impl From<u8> for Rank {
       6 => Rank::Six,
       7 => Rank::Seven,
       8 => Rank::Eight,
-      _ => panic!("Tried to convert unknown rank")
+      _ => Rank::Invalid,
     }
   }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd)]
 pub enum File {
   A = 1,
   B = 2,
@@ -95,10 +113,27 @@ pub enum File {
   F = 6,
   G = 7,
   H = 8,
+  Invalid = std::isize::MAX,
 }
 
-impl Into<u8> for File {
-  fn into(self) -> u8 {
+impl Display for File {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.clone() {
+      File::A => write!(f, "A"),
+      File::B => write!(f, "B"),
+      File::C => write!(f, "C"),
+      File::D => write!(f, "D"),
+      File::E => write!(f, "E"),
+      File::F => write!(f, "F"),
+      File::G => write!(f, "G"),
+      File::H => write!(f, "H"),
+      File::Invalid => write!(f, "!"),
+    }
+  }
+}
+
+impl Into<i8> for File {
+  fn into(self) -> i8 {
     match self {
       File::A => 1,
       File::B => 2,
@@ -108,12 +143,13 @@ impl Into<u8> for File {
       File::F => 6,
       File::G => 7,
       File::H => 8,
+      File::Invalid => panic!("Trying to put invalid file into i8"),
     }
   }
 }
 
-impl From<u8> for File {
-  fn from(x: u8) -> Self {
+impl From<i8> for File {
+  fn from(x: i8) -> Self {
     match x {
       1 => File::A,
       2 => File::B,
@@ -123,7 +159,7 @@ impl From<u8> for File {
       6 => File::F,
       7 => File::G,
       8 => File::H,
-      _ => panic!("Tried to convert unknown rank")
+      _ => File::Invalid,
     }
   }
 }
@@ -164,8 +200,12 @@ impl Board {
   /// The coordinates assume a chess player's perspective, and is not zero-indexed.
   /// For example, the coordinates (1, 8) would map to A8.
   /// This function handles the conversion from one-indexing to zero-indexing.
-  fn get_square_by_coords(&self, x: u8, y: u8) -> &Square {
-    &self.squares[((self.width * (y - 1)) + (x - 1)) as usize]
+  fn get_square_by_coords(&self, x: i8, y: i8) -> &Square {
+    if x < 0 || y < 0 {
+      panic!("Received negative coordinates")
+    }
+
+    &self.squares[((self.width as i8 * (y - 1)) + (x - 1)) as usize]
   }
 
   /// Returns a [`Square`](`crate::board::Square`) given a rank and file.

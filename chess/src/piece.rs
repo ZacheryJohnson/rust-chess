@@ -3,6 +3,7 @@ use core::fmt;
 
 type CoordinateDelta = (i8, i8);
 
+#[derive(PartialEq)]
 pub enum Color {
   White,
   Black,
@@ -17,6 +18,7 @@ impl Display for Color {
   }
 }
 
+#[derive(PartialEq)]
 pub enum MoveType {
   /// Linear pieces must stop upon encountering any piece.
   /// All standard chess pieces are linear except the knight.
