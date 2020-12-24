@@ -265,8 +265,8 @@ pub struct Board {
 
 impl Display for Board {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    for x in (0..BOARD_WIDTH).rev() {
-      for y in 0..BOARD_HEIGHT {
+    for y in (0..BOARD_HEIGHT).rev() {
+      for x in 0..BOARD_WIDTH {
         let square = self.get_square_by_coords(x, y).unwrap();
         match &square.piece {
           Some(piece) => {write!(f, "|{}{}", piece.get_color(), piece.get_short_name());},
@@ -292,8 +292,8 @@ impl Board {
     let mut squares: Vec<Square> = vec![];
     let mut color = SquareColor::Dark;
 
-    for x in 0..BOARD_WIDTH {
-      for y in 0..BOARD_HEIGHT {
+    for y in 0..BOARD_HEIGHT {
+      for x in 0..BOARD_WIDTH {
         let piece = get_piece_at_start_coord(make_coord(x, y));
         squares.push(Square::new(color, piece));
         color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark }
@@ -325,7 +325,7 @@ impl Board {
 
   /// Returns a [`Square`](`crate::board::Square`) given a rank and file.
   pub fn get_square(&self, coord: Coordinate) -> Result<&Square, Error> {
-    self.get_square_by_coords(Into::<i8>::into(coord.rank) - 1, Into::<i8>::into(coord.file) - 1)
+    self.get_square_by_coords(Into::<i8>::into(coord.file) - 1, Into::<i8>::into(coord.rank) - 1)
   }
 
   /// Attempts to parse a board position `&str` into a
