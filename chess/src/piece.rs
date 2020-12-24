@@ -3,7 +3,7 @@ use core::fmt;
 
 type CoordinateDelta = (i8, i8);
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Color {
   White,
   Black,
@@ -81,7 +81,7 @@ impl Piece for Knight {
 
   fn get_move_type(&self) -> MoveType { MoveType::Jump }
 
-  fn get_short_name(&self) -> &'static str { "K" }
+  fn get_short_name(&self) -> &'static str { "N" }
 
   fn get_moves(&self) -> Vec<CoordinateDelta> {
     vec!(
@@ -183,7 +183,7 @@ impl Piece for King {
 
   fn get_move_type(&self) -> MoveType { MoveType::Linear }
 
-  fn get_short_name(&self) -> &'static str { "$" }
+  fn get_short_name(&self) -> &'static str { "K" }
 
   fn get_moves(&self) -> Vec<CoordinateDelta> {
     vec!(
