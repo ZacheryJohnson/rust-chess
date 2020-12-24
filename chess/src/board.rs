@@ -1,6 +1,7 @@
 use std::{vec};
 use std::fmt;
 use std::fmt::{Display, Formatter};
+use std::collections::HashSet;
 use crate::piece::{*};
 
 const BOARD_WIDTH: i8 = 8;
@@ -10,6 +11,7 @@ const BOARD_HEIGHT: i8 = 8;
 pub enum Error {
   InvalidPositionString,
   InvalidRawCoordinatePair,
+  InvalidFENString
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -203,6 +205,7 @@ impl Into<&str> for File {
   }
 }
 
+#[derive(Clone, Copy, Debug, PartialOrd, PartialEq)]
 pub struct Coordinate {
   pub file: File,
   pub rank: Rank
@@ -257,31 +260,93 @@ fn make_coord(x: i8, y: i8) -> Coordinate {
   Coordinate { file: File::from(x + 1), rank: Rank::from(y + 1) }
 }
 
+/// Attempts to parse a board position `&str` into a
+  /// ([`Rank`](`crate::board::Rank`), [`File`](`crate::board::File`)) tuple.
+  /// A [`Error`](`crate::board::Error`) will be returned if the position fails
+  /// to parse.
+fn get_coordinate(position_str: &str) -> Result<Coordinate, Error> {
+  if position_str.len() != 2 {
+    return Err(Error::InvalidPositionString);
+  }
+
+  let file = match position_str.chars().nth(0) {
+    Some('a') | Some('A') => Ok(File::A),
+    Some('b') | Some('B') => Ok(File::B),
+    Some('c') | Some('C') => Ok(File::C),
+    Some('d') | Some('D') => Ok(File::D),
+    Some('e') | Some('E') => Ok(File::E),
+    Some('f') | Some('F') => Ok(File::F),
+    Some('g') | Some('G') => Ok(File::G),
+    Some('h') | Some('H') => Ok(File::H),
+    _ => Err(Error::InvalidPositionString)
+  }?;
+
+  let rank = match position_str.chars().nth(1) {
+    Some('1') => Ok(Rank::One),
+    Some('2') => Ok(Rank::Two),
+    Some('3') => Ok(Rank::Three),
+    Some('4') => Ok(Rank::Four),
+    Some('5') => Ok(Rank::Five),
+    Some('6') => Ok(Rank::Six),
+    Some('7') => Ok(Rank::Seven),
+    Some('8') => Ok(Rank::Eight),
+    _ => Err(Error::InvalidPositionString)
+  }?;
+
+  Ok(Coordinate{file, rank})
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum CastleAvailability {
+  WhiteKingside,
+  WhiteQueenside,
+  BlackKingside,
+  BlackQueenside,
+}
+
+fn get_default_castling_availability() -> HashSet<CastleAvailability> {
+  let mut castling_availability = HashSet::new();
+  castling_availability.insert(CastleAvailability::WhiteKingside);
+  castling_availability.insert(CastleAvailability::WhiteQueenside);
+  castling_availability.insert(CastleAvailability::BlackKingside);
+  castling_availability.insert(CastleAvailability::BlackQueenside);
+
+  castling_availability
+}
 
 /// Collection of [`Square`](`crate::board::Square`)s, 8x8.
 pub struct Board {
-  squares: Vec<Square>
+  squares: Vec<Square>,
+  active_color: Color, // TODO: move this to player mod instead of piece
+  castling_availability: HashSet<CastleAvailability>,
+  en_passant_target: Option<Coordinate>,
+  half_move_clock: i32,
+  full_move: i32,
 }
 
 impl Display for Board {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    let mut str_output = String::new();
+
     for y in (0..BOARD_HEIGHT).rev() {
       for x in 0..BOARD_WIDTH {
         let square = self.get_square_by_coords(x, y).unwrap();
         match &square.piece {
-          Some(piece) => {write!(f, "|{}{}", piece.get_color(), piece.get_short_name());},
+          Some(piece) => {
+            str_output += &format!("|{}{}", piece.get_color(), piece.get_short_name());
+          },
           None => {
             match square.get_color() {
-              SquareColor::Dark => {write!(f, "|::");},
-              SquareColor::Light => {write!(f, "|  ");},
+              SquareColor::Dark => { str_output.push_str("|::");},
+              SquareColor::Light => { str_output.push_str("|  ");},
             }
           },
         };
       }
-      write!(f, "\n");
+      str_output.push('\n');
     }
 
-    write!(f, "")
+    write!(f, "{}", str_output)
   }
 }
 
@@ -296,16 +361,166 @@ impl Board {
       for x in 0..BOARD_WIDTH {
         let piece = get_piece_at_start_coord(make_coord(x, y));
         squares.push(Square::new(color, piece));
-        color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark }
+        color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
       }
 
       // Chess boards flip colors every row, so repeat the last color we used by flipping again
-      color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark }
+      color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
     }
 
     Board {
-      squares
+      squares,
+      active_color: Color::White,
+      castling_availability: get_default_castling_availability(),
+      en_passant_target: None,
+      half_move_clock: 0,
+      full_move: 1
     }
+  }
+
+  /// Creates a board from a given FEN string.
+  pub fn from_fen_string(fen_string: &str) -> Result<Board, Error> {
+    let fields: Vec<&str> = fen_string.split(" ").collect();
+
+    if fields.len() != 6 {
+      return Err(Error::InvalidFENString);
+    }
+
+    let pieces_str = fields[0];
+    // In FEN, black rows are listed first and white rows last, so we'll reverse it first
+    let mut ranks: Vec<&str> = pieces_str.split("/").collect();
+    ranks.reverse();
+
+    let mut squares: Vec<Square> = vec![];
+    let mut color = SquareColor::Dark;
+    for rank in ranks {
+      let mut expected_pieces_remaining: i8 = 8;
+      for piece in rank.chars() {
+        if expected_pieces_remaining <= 0 {
+          println!("Found more pieces in a rank that was expecting!");
+          return Err(Error::InvalidFENString);
+        }
+
+        let mut additional_empty_squares: i8 = 0;
+        let piece: Result<Option<Box<dyn Piece>>, Error> = match piece {
+          'p' => Ok(Some(Box::new(Pawn::new(Color::Black)))),
+          'r' => Ok(Some(Box::new(Rook::new(Color::Black)))),
+          'n' => Ok(Some(Box::new(Knight::new(Color::Black)))),
+          'b' => Ok(Some(Box::new(Bishop::new(Color::Black)))),
+          'q' => Ok(Some(Box::new(Queen::new(Color::Black)))),
+          'k' => Ok(Some(Box::new(King::new(Color::Black)))),
+          'P' => Ok(Some(Box::new(Pawn::new(Color::White)))),
+          'R' => Ok(Some(Box::new(Rook::new(Color::White)))),
+          'N' => Ok(Some(Box::new(Knight::new(Color::White)))),
+          'B' => Ok(Some(Box::new(Bishop::new(Color::White)))),
+          'Q' => Ok(Some(Box::new(Queen::new(Color::White)))),
+          'K' => Ok(Some(Box::new(King::new(Color::White)))),
+          '1' => { Ok(None) },
+          '2' => { additional_empty_squares = 1; Ok(None) },
+          '3' => { additional_empty_squares = 2; Ok(None) },
+          '4' => { additional_empty_squares = 3; Ok(None) },
+          '5' => { additional_empty_squares = 4; Ok(None) },
+          '6' => { additional_empty_squares = 5; Ok(None) },
+          '7' => { additional_empty_squares = 6; Ok(None) },
+          '8' => { additional_empty_squares = 7; Ok(None) },
+          _ => Err(Error::InvalidFENString),
+        };
+
+        squares.push(Square::new(color, piece?));
+        color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
+        expected_pieces_remaining -= 1;
+
+        for _ in 0..additional_empty_squares {
+          if expected_pieces_remaining <= 0 {
+            println!("Found more pieces in a rank that was expecting!");
+            return Err(Error::InvalidFENString);
+          }
+          squares.push(Square::new(color, None));
+          color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
+          expected_pieces_remaining -= 1;
+        }
+      }
+
+      // Chess boards flip colors every row, so repeat the last color we used by flipping again
+      color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
+    }
+
+    let active_color_str = fields[1];
+    let active_color: Color = {
+      if active_color_str == "w" || active_color_str == "W" {
+        Ok(Color::White)
+      }
+      else if active_color_str == "b" || active_color_str == "B" {
+        Ok(Color::Black)
+      }
+      else {
+        Err(Error::InvalidFENString)
+      }
+    }?;
+
+    let castling_avail_str = fields[2];
+    let mut castling_availability = HashSet::new();
+    for castle_char in castling_avail_str.chars() {
+      let _ = match castle_char {
+        'K' => { castling_availability.insert(CastleAvailability::WhiteKingside); Ok(())},
+        'Q' => { castling_availability.insert(CastleAvailability::WhiteQueenside); Ok(())},
+        'k' => { castling_availability.insert(CastleAvailability::BlackKingside); Ok(())},
+        'q' => { castling_availability.insert(CastleAvailability::BlackQueenside); Ok(())},
+        '-' => { Ok(()) },
+        _ => Err(Error::InvalidFENString),
+      }?;
+    }
+
+    let en_passant_str = fields[3];
+    let en_passant_target: Option<Coordinate> = {
+      if en_passant_str == "-" {
+        Ok(None)
+      }
+      else {
+        Ok(Some(get_coordinate(en_passant_str)?))
+      }
+    }?;
+
+    let half_move_str = fields[4];
+    let half_move_clock = match half_move_str.parse() {
+      Ok(val) => Ok(val),
+      Err(_) => Err(Error::InvalidFENString),
+    }?;
+
+    let full_move_str = fields[5];
+    let full_move = match full_move_str.parse() {
+      Ok(val) => Ok(val),
+      Err(_) => Err(Error::InvalidFENString),
+    }?;
+
+    Ok(Board {
+      squares,
+      active_color,
+      castling_availability,
+      en_passant_target,
+      half_move_clock,
+      full_move,
+    })
+  }
+
+  pub fn get_active_color(&self) -> Color {
+    self.active_color.clone()
+  }
+
+  pub fn get_castling_availability(&self) -> HashSet<CastleAvailability> {
+    self.castling_availability.clone()
+  }
+
+  pub fn get_en_passant_target(&self) -> Option<Coordinate> {
+    self.en_passant_target.clone()
+  }
+
+  pub fn get_half_move_clock(&self) -> i32 {
+    self.half_move_clock
+  }
+
+  pub fn get_full_move(&self) -> i32 {
+    self.full_move
   }
 
   /// Returns a [`Square`](`crate::board::Square`) given the coordinates.
@@ -326,42 +541,6 @@ impl Board {
   /// Returns a [`Square`](`crate::board::Square`) given a rank and file.
   pub fn get_square(&self, coord: Coordinate) -> Result<&Square, Error> {
     self.get_square_by_coords(Into::<i8>::into(coord.file) - 1, Into::<i8>::into(coord.rank) - 1)
-  }
-
-  /// Attempts to parse a board position `&str` into a
-  /// ([`Rank`](`crate::board::Rank`), [`File`](`crate::board::File`)) tuple.
-  /// A [`Error`](`crate::board::Error`) will be returned if the position fails
-  /// to parse.
-  pub fn get_coordinate(&self, position_str: &str) -> Result<Coordinate, Error> {
-    if position_str.len() != 2 {
-      return Err(Error::InvalidPositionString);
-    }
-
-    let file = match position_str.chars().nth(0) {
-      Some('a') | Some('A') => Ok(File::A),
-      Some('b') | Some('B') => Ok(File::B),
-      Some('c') | Some('C') => Ok(File::C),
-      Some('d') | Some('D') => Ok(File::D),
-      Some('e') | Some('E') => Ok(File::E),
-      Some('f') | Some('F') => Ok(File::F),
-      Some('g') | Some('G') => Ok(File::G),
-      Some('h') | Some('H') => Ok(File::H),
-      _ => Err(Error::InvalidPositionString)
-    }?;
-
-    let rank = match position_str.chars().nth(1) {
-      Some('1') => Ok(Rank::One),
-      Some('2') => Ok(Rank::Two),
-      Some('3') => Ok(Rank::Three),
-      Some('4') => Ok(Rank::Four),
-      Some('5') => Ok(Rank::Five),
-      Some('6') => Ok(Rank::Six),
-      Some('7') => Ok(Rank::Seven),
-      Some('8') => Ok(Rank::Eight),
-      _ => Err(Error::InvalidPositionString)
-    }?;
-
-    Ok(Coordinate{file, rank})
   }
 }
 
@@ -406,49 +585,70 @@ mod tests {
   }
 
   #[test]
-  fn test_get_coordinate_a1_success() {
-    let board = make_standard_board();
+  fn test_fen_string_starting_position_success() {
+    let board = Board::from_fen_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+    assert_eq!(board.get_active_color(), Color::White);
+    assert_eq!(board.get_castling_availability(), get_default_castling_availability());
+    assert!(board.get_en_passant_target().is_none());
+    assert_eq!(board.get_half_move_clock(), 0);
+    assert_eq!(board.get_full_move(), 1);
+    println!("{}", board);
+  }
 
-    let coord = board.get_coordinate("A1").unwrap();
+  #[test]
+  fn test_fen_string_starting_position_then_e4_success() {
+    let board = Board::from_fen_string("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1").unwrap();
+    assert_eq!(board.get_active_color(), Color::Black);
+    assert_eq!(board.get_castling_availability(), get_default_castling_availability());
+    assert_eq!(board.get_en_passant_target().unwrap(), Coordinate { file: File::E, rank: Rank::Three });
+    assert_eq!(board.get_half_move_clock(), 0);
+    assert_eq!(board.get_full_move(), 1);
+    println!("{}", board)
+  }
+
+  #[test]
+  fn test_fen_string_lategame_success() {
+    let board = Board::from_fen_string("8/1k4R1/1r6/6p1/8/3r2p1/3P2P1/2B3K1 b - - 1 37").unwrap();
+    assert_eq!(board.get_active_color(), Color::Black);
+    assert_eq!(board.get_castling_availability(), HashSet::new());
+    assert!(board.get_en_passant_target().is_none());
+    assert_eq!(board.get_half_move_clock(), 1);
+    assert_eq!(board.get_full_move(), 37);
+    println!("{}", board)
+  }
+
+  #[test]
+  fn test_get_coordinate_a1_success() {
+    let coord = get_coordinate("A1").unwrap();
     assert_eq!(coord.file, File::A);
     assert_eq!(coord.rank, Rank::One);
   }
 
   #[test]
   fn test_get_coordinate_h8_success() {
-    let board = make_standard_board();
-
-    let coord = board.get_coordinate("H8").unwrap();
+    let coord = get_coordinate("H8").unwrap();
     assert_eq!(coord.file, File::H);
     assert_eq!(coord.rank, Rank::Eight);
   }
 
   #[test]
   fn test_get_coordinate_z5_invalid() {
-    let board = make_standard_board();
-
-    assert_eq!(board.get_coordinate("Z5").err().unwrap(), Error::InvalidPositionString);
+    assert_eq!(get_coordinate("Z5").err().unwrap(), Error::InvalidPositionString);
   }
 
   #[test]
   fn test_get_coordinate_empty_string_invalid() {
-    let board = make_standard_board();
-
-    assert_eq!(board.get_coordinate("").err().unwrap(), Error::InvalidPositionString);
+    assert_eq!(get_coordinate("").err().unwrap(), Error::InvalidPositionString);
   }
 
   #[test]
   fn test_get_coordinate_a9_invalid() {
-    let board = make_standard_board();
-
-    assert_eq!(board.get_coordinate("a9").err().unwrap(), Error::InvalidPositionString);
+    assert_eq!(get_coordinate("a9").err().unwrap(), Error::InvalidPositionString);
   }
 
   #[test]
   fn test_get_coordinate_1010_invalid() {
-    let board = make_standard_board();
-
-    assert_eq!(board.get_coordinate("1010").err().unwrap(), Error::InvalidPositionString);
+    assert_eq!(get_coordinate("1010").err().unwrap(), Error::InvalidPositionString);
   }
 
   #[test]

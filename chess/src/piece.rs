@@ -3,7 +3,7 @@ use core::fmt;
 
 type CoordinateDelta = (i8, i8);
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Color {
   White,
   Black,
