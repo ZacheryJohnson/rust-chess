@@ -3,6 +3,12 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::collections::HashSet;
 use crate::piece::{*};
+use crate::piece::bishop::Bishop;
+use crate::piece::king::King;
+use crate::piece::knight::Knight;
+use crate::piece::pawn::Pawn;
+use crate::piece::queen::Queen;
+use crate::piece::rook::Rook;
 use crate::board::CastleAvailability::{WhiteKingside, BlackQueenside, BlackKingside, WhiteQueenside};
 
 const BOARD_WIDTH: i8 = 8;
