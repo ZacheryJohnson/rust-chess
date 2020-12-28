@@ -10,6 +10,7 @@ use crate::piece::pawn::Pawn;
 use crate::piece::queen::Queen;
 use crate::piece::rook::Rook;
 use crate::board::CastleAvailability::{WhiteKingside, BlackQueenside, BlackKingside, WhiteQueenside};
+use std::ops::Add;
 
 const BOARD_WIDTH: i8 = 8;
 const BOARD_HEIGHT: i8 = 8;
@@ -55,6 +56,10 @@ impl Square {
   /// Returns the [`Square`](`crate::board::Square`)'s [`SquareColor`](`crate::board::SquareColor`).
   pub fn get_color(&self) -> &SquareColor {
     &self.color
+  }
+
+  pub fn get_piece(&self) -> &Option<Box<dyn Piece>> {
+    &self.piece
   }
 }
 
@@ -230,6 +235,17 @@ impl Into<String> for Coordinate {
     let rank_str: &str = self.rank.into();
 
     String::from(file_str) + rank_str
+  }
+}
+
+impl Add<(i8, i8)> for Coordinate {
+  type Output = Self;
+
+  fn add(self, rhs: (i8, i8)) -> Self::Output {
+    Coordinate {
+      file: File::from(Into::<i8>::into(self.file) + rhs.0),
+      rank: Rank::from(Into::<i8>::into(self.rank) + rhs.1)
+    }
   }
 }
 

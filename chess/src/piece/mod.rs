@@ -7,7 +7,7 @@ pub mod rook;
 
 use std::fmt::Display;
 use std::fmt;
-use crate::board::Coordinate;
+use crate::board::{Coordinate, Board};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Color {
@@ -24,28 +24,11 @@ impl Display for Color {
   }
 }
 
-#[derive(PartialEq)]
-pub enum MoveType {
-  /// Linear pieces must stop upon encountering any piece.
-  /// All standard chess pieces are linear except the knight.
-  Linear,
-
-  /// Jump pieces can "jump" over other pieces and aren't stopped
-  /// if any pieces would be in their path if travelling linearly.
-  /// The knight is the only jump piece.
-  Jump,
-}
-
 pub trait Piece {
   fn get_color(&self) -> &Color;
 
-  fn get_move_type(&self) -> MoveType;
-
   fn get_short_name(&self) -> &'static str;
 
-  /// Returns the legal moves a piece can make in isolation.
-  /// This does NOT consider any other pieces - imagine the piece alone on an empty board.
-  /// This means that pawns can't capture (normally or en passant), pieces don't need to
-  /// respect check/checkmate, etc.
-  fn get_moves(&self) -> Vec<Coordinate>;
+  /// Returns the legal moves a piece can make given the board state and it's own coordinates.
+  fn get_moves(&self, board: &Board, own_coords: &Coordinate) -> Vec<Coordinate>;
 }

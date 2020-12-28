@@ -10,11 +10,9 @@ impl Knight {
 impl Piece for Knight {
   fn get_color(&self) -> &Color { &self.color }
 
-  fn get_move_type(&self) -> MoveType { MoveType::Jump }
-
   fn get_short_name(&self) -> &'static str { "N" }
 
-  fn get_moves(&self) -> Vec<Coordinate> {
+  fn get_moves(&self, board: &Board, own_coords: &Coordinate) -> Vec<Coordinate> {
     unimplemented!()
   }
 }
