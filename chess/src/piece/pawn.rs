@@ -52,7 +52,6 @@ impl Piece for Pawn {
 
 #[cfg(test)]
 mod tests {
-  use super::{*};
   use crate::board::{*};
 
   #[test]

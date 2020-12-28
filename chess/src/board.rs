@@ -1,16 +1,15 @@
-use std::{vec};
 use std::fmt;
-use std::fmt::{Display, Formatter};
 use std::collections::HashSet;
-use crate::piece::{*};
+
+use std::ops::Add;
+
+use crate::piece::{Color, Piece};
 use crate::piece::bishop::Bishop;
 use crate::piece::king::King;
 use crate::piece::knight::Knight;
 use crate::piece::pawn::Pawn;
 use crate::piece::queen::Queen;
 use crate::piece::rook::Rook;
-use crate::board::CastleAvailability::{WhiteKingside, BlackQueenside, BlackKingside, WhiteQueenside};
-use std::ops::Add;
 
 const BOARD_WIDTH: i8 = 8;
 const BOARD_HEIGHT: i8 = 8;
@@ -28,7 +27,7 @@ pub enum SquareColor {
   Dark,
 }
 
-impl Display for SquareColor {
+impl fmt::Display for SquareColor {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.clone() {
       SquareColor::Light => write!(f, "L"),
@@ -76,7 +75,7 @@ pub enum Rank {
   Invalid = std::isize::MAX,
 }
 
-impl Display for Rank {
+impl fmt::Display for Rank {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.clone() {
       Rank::One => write!(f, "1"),
@@ -153,7 +152,7 @@ pub enum File {
   Invalid = std::isize::MAX,
 }
 
-impl Display for File {
+impl fmt::Display for File {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.clone() {
       File::A => write!(f, "A"),
@@ -223,8 +222,8 @@ pub struct Coordinate {
   pub rank: Rank
 }
 
-impl Display for Coordinate {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for Coordinate {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}{}", Into::<&str>::into(self.file), Into::<&str>::into(self.rank))
   }
 }
@@ -338,10 +337,10 @@ pub enum CastleAvailability {
 
 fn get_castle_availability_str(avail: &HashSet<CastleAvailability>) -> String {
   let mut _str = String::new();
-  if avail.contains(&WhiteKingside) { _str += "K"; }
-  if avail.contains(&WhiteQueenside) { _str += "Q"; }
-  if avail.contains(&BlackKingside) { _str += "k"; }
-  if avail.contains(&BlackQueenside) { _str += "q"; }
+  if avail.contains(&CastleAvailability::WhiteKingside) { _str += "K"; }
+  if avail.contains(&CastleAvailability::WhiteQueenside) { _str += "Q"; }
+  if avail.contains(&CastleAvailability::BlackKingside) { _str += "k"; }
+  if avail.contains(&CastleAvailability::BlackQueenside) { _str += "q"; }
 
   if _str.is_empty() { _str = String::from("-"); }
 
@@ -361,15 +360,15 @@ fn get_default_castling_availability() -> HashSet<CastleAvailability> {
 /// Collection of [`Square`](`crate::board::Square`)s, 8x8.
 pub struct Board {
   squares: Vec<Square>,
-  active_color: Color, // TODO: move this to player mod instead of piece
+  active_color: Color,
   castling_availability: HashSet<CastleAvailability>,
   en_passant_target: Option<Coordinate>,
   half_move_clock: i32,
   full_move: i32,
 }
 
-impl Display for Board {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for Board {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let mut str_output = String::new();
 
     for y in (0..BOARD_HEIGHT).rev() {
