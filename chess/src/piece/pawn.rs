@@ -120,10 +120,6 @@ mod tests {
       .get_piece().as_ref().unwrap()
       .get_moves(&board, &coords);
 
-    for m in &moves {
-      println!("{}", m);
-    }
-
     assert_eq!(moves.len(), 1);
     assert!(moves.contains(&Coordinate { file: File::E, rank: Rank::Six })); // En passant capture
   }
