@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::collections::HashSet;
 use crate::piece::{*};
+use crate::board::CastleAvailability::{WhiteKingside, BlackQueenside, BlackKingside, WhiteQueenside};
 
 const BOARD_WIDTH: i8 = 8;
 const BOARD_HEIGHT: i8 = 8;
@@ -217,6 +218,15 @@ impl Display for Coordinate {
   }
 }
 
+impl Into<String> for Coordinate {
+  fn into(self) -> String {
+    let file_str: &str = self.file.into();
+    let rank_str: &str = self.rank.into();
+
+    String::from(file_str) + rank_str
+  }
+}
+
 fn get_piece_at_start_coord(coord: Coordinate) -> Option<Box<dyn Piece>>{
   match (coord.file, coord.rank) {
     (File::A, Rank::One) => Some(Box::new(Rook::new(Color::White))),
@@ -302,6 +312,18 @@ pub enum CastleAvailability {
   WhiteQueenside,
   BlackKingside,
   BlackQueenside,
+}
+
+fn get_castle_availability_str(avail: &HashSet<CastleAvailability>) -> String {
+  let mut _str = String::new();
+  if avail.contains(&WhiteKingside) { _str += "K"; }
+  if avail.contains(&WhiteQueenside) { _str += "Q"; }
+  if avail.contains(&BlackKingside) { _str += "k"; }
+  if avail.contains(&BlackQueenside) { _str += "q"; }
+
+  if _str.is_empty() { _str = String::from("-"); }
+
+  _str
 }
 
 fn get_default_castling_availability() -> HashSet<CastleAvailability> {
@@ -503,6 +525,73 @@ impl Board {
     })
   }
 
+  pub fn to_fen_string(&self) -> String {
+    let mut fen_string = String::new();
+
+    // Pieces
+    for y in (0..BOARD_HEIGHT).rev() {
+      let mut consecutive_empty_squares: u8 = 0;
+      for x in 0..BOARD_WIDTH {
+        let square = self.get_square_by_coords(x, y).unwrap();
+        match &square.piece {
+          Some(piece) => {
+            if consecutive_empty_squares > 0 {
+              fen_string += consecutive_empty_squares.to_string().as_str();
+            }
+            consecutive_empty_squares = 0;
+
+            fen_string += &match piece.get_color() {
+              Color::White => piece.get_short_name().to_uppercase(),
+              Color::Black => piece.get_short_name().to_lowercase(),
+            };
+
+          },
+          None => {
+            consecutive_empty_squares += 1;
+          },
+        };
+      }
+      if consecutive_empty_squares > 0 {
+        fen_string += consecutive_empty_squares.to_string().as_str();
+      }
+
+      fen_string.push('/');
+    }
+
+    // Remove extra / at end
+    fen_string.pop();
+
+    fen_string += " ";
+
+    // Active color
+    fen_string += if self.get_active_color() == Color::White { "w" } else { "b" };
+
+    fen_string += " ";
+
+    // Active castling availability
+    fen_string += get_castle_availability_str(&self.get_castling_availability()).as_str();
+
+    fen_string += " ";
+
+    // En passant target
+    fen_string += match self.get_en_passant_target() {
+      Some(coord) => Into::<String>::into(coord),
+      None => String::from("-"),
+    }.to_lowercase().as_str();
+
+    fen_string += " ";
+
+    // Half move clock
+    fen_string += self.get_half_move_clock().to_string().as_str();
+
+    fen_string += " ";
+
+    // Full move
+    fen_string += self.get_full_move().to_string().as_str();
+
+    fen_string
+  }
+
   pub fn get_active_color(&self) -> Color {
     self.active_color.clone()
   }
@@ -596,6 +685,12 @@ mod tests {
   }
 
   #[test]
+  fn test_to_fen_string_starting_position_success() {
+    let board = Board::new();
+    assert_eq!(board.to_fen_string(), String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+  }
+
+  #[test]
   fn test_fen_string_starting_position_then_e4_success() {
     let board = Board::from_fen_string("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1").unwrap();
     assert_eq!(board.get_active_color(), Color::Black);
@@ -604,6 +699,12 @@ mod tests {
     assert_eq!(board.get_half_move_clock(), 0);
     assert_eq!(board.get_full_move(), 1);
     println!("{}", board)
+  }
+
+  #[test]
+  fn test_to_fen_string_starting_position_then_e4_success() {
+    let board = Board::from_fen_string("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1").unwrap();
+    assert_eq!(board.to_fen_string(), String::from("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"));
   }
 
   #[test]
