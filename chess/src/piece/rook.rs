@@ -46,8 +46,6 @@ impl Piece for Rook {
       }
     }
 
-    println!("{:?}", potential_moves);
-
     potential_moves
   }
 }
