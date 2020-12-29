@@ -40,7 +40,7 @@ impl Piece for Pawn {
     let capture_squares: Vec<Coordinate> = vec![*own_coords + (1, forward), *own_coords + (-1, forward)];
     for capture in capture_squares {
       match board.get_square(capture) {
-        Ok(square) if square.get_piece().as_ref().is_some() && square.get_piece().as_ref().unwrap().get_color() != self.get_color() => { potential_moves.push(capture); },
+        Ok(_) if board.can_capture(&capture, &self.color) => { potential_moves.push(capture); },
         Ok(_) if board.get_en_passant_target().as_ref().is_some() && board.get_en_passant_target().as_ref().unwrap() == &capture => { potential_moves.push(capture); }
         _ => {},
       }

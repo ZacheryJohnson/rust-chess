@@ -248,6 +248,12 @@ impl Add<(i8, i8)> for Coordinate {
   }
 }
 
+impl Coordinate {
+  pub fn is_valid(&self) -> bool {
+    self.file != File::Invalid && self.rank != Rank::Invalid
+  }
+}
+
 fn get_piece_at_start_coord(coord: Coordinate) -> Option<Box<dyn Piece>>{
   match (coord.file, coord.rank) {
     (File::A, Rank::One) => Some(Box::new(Rook::new(Color::White))),
@@ -631,6 +637,22 @@ impl Board {
 
   pub fn get_full_move(&self) -> i32 {
     self.full_move
+  }
+
+  /// Returns true if a move or capture a piece at the target coordinate given it's color
+  pub fn can_capture(&self, target_coord: &Coordinate, mover_color: &Color) -> bool {
+    match self.get_square(*target_coord) {
+      Ok(square) if square.get_piece().is_some() && *square.get_piece().as_ref().unwrap().get_color() != *mover_color => true,
+      _ => false,
+    }
+  }
+
+  /// Returns true if a piece can move to a target coordinate given it's color
+  pub fn can_move(&self, target_coord: &Coordinate, mover_color: &Color) -> bool {
+    match self.get_square(*target_coord) {
+      Ok(square) if square.get_piece().is_none() => true,
+      _ => false,
+    }
   }
 
   /// Returns a [`Square`](`crate::board::Square`) given the coordinates.
