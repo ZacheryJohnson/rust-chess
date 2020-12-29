@@ -52,7 +52,6 @@ impl Piece for Rook {
   }
 }
 
-
 #[cfg(test)]
 mod tests {
   use crate::board::{*};
@@ -77,8 +76,6 @@ mod tests {
       .get_square(coords.clone()).unwrap()
       .get_piece().as_ref().unwrap()
       .get_moves(&board, &coords);
-
-    println!("{:?}", moves);
 
     assert_eq!(moves.len(), 9);
     assert!(moves.contains(&Coordinate { file: File::A, rank: Rank::Three }));
