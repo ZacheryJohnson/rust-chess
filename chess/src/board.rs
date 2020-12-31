@@ -1,7 +1,7 @@
 use std::fmt;
 use std::collections::HashSet;
 
-use std::ops::Add;
+use std::ops::{Add};
 
 use crate::piece::{Color, Piece};
 use crate::piece::bishop::Bishop;
@@ -39,27 +39,27 @@ impl fmt::Display for SquareColor {
 /// Individual square on a [`Board`](`crate::board::Board`). Only has a color.
 pub struct Square {
   color: SquareColor,
+  coord: Coordinate,
   piece: Option<Box<dyn Piece>>
 }
 
 impl Square {
   /// Creates a [`Square`](`crate::board::Square`)
   /// with a given [`SquareColor`](`crate::board::SquareColor`).
-  pub fn new(color: SquareColor, piece: Option<Box<dyn Piece>>) -> Square {
+  pub fn new(color: SquareColor, coord: Coordinate, piece: Option<Box<dyn Piece>>) -> Square {
     Square {
       color,
+      coord,
       piece
     }
   }
 
   /// Returns the [`Square`](`crate::board::Square`)'s [`SquareColor`](`crate::board::SquareColor`).
-  pub fn get_color(&self) -> &SquareColor {
-    &self.color
-  }
+  pub fn get_color(&self) -> &SquareColor { &self.color }
 
-  pub fn get_piece(&self) -> &Option<Box<dyn Piece>> {
-    &self.piece
-  }
+  pub fn get_coord(&self) -> &Coordinate { &self.coord }
+
+  pub fn get_piece(&self) -> &Option<Box<dyn Piece>> { &self.piece }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd)]
@@ -254,7 +254,7 @@ impl Coordinate {
   }
 }
 
-fn get_piece_at_start_coord(coord: Coordinate) -> Option<Box<dyn Piece>>{
+fn get_piece_at_start_coord(coord: &Coordinate) -> Option<Box<dyn Piece>>{
   match (coord.file, coord.rank) {
     (File::A, Rank::One) => Some(Box::new(Rook::new(Color::White))),
     (File::B, Rank::One) => Some(Box::new(Knight::new(Color::White))),
@@ -408,8 +408,9 @@ impl Board {
 
     for y in 0..BOARD_HEIGHT {
       for x in 0..BOARD_WIDTH {
-        let piece = get_piece_at_start_coord(make_coord(x, y));
-        squares.push(Square::new(color, piece));
+        let coord = make_coord(x, y);
+        let piece = get_piece_at_start_coord(&coord);
+        squares.push(Square::new(color, coord, piece));
         color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
       }
 
@@ -441,6 +442,7 @@ impl Board {
     ranks.reverse();
 
     let mut squares: Vec<Square> = vec![];
+    let mut square_idx = 0;
     let mut color = SquareColor::Dark;
     for rank in ranks {
       let mut expected_pieces_remaining: i8 = 8;
@@ -475,18 +477,22 @@ impl Board {
           _ => Err(Error::InvalidFENString),
         };
 
-        squares.push(Square::new(color, piece?));
+        let coord = make_coord(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
+        squares.push(Square::new(color, coord, piece?));
         color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
         expected_pieces_remaining -= 1;
+        square_idx += 1;
 
         for _ in 0..additional_empty_squares {
           if expected_pieces_remaining <= 0 {
             println!("Found more pieces in a rank that was expecting!");
             return Err(Error::InvalidFENString);
           }
-          squares.push(Square::new(color, None));
+          let coord = make_coord(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
+          squares.push(Square::new(color, coord, None));
           color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
           expected_pieces_remaining -= 1;
+          square_idx += 1;
         }
       }
 
@@ -655,6 +661,28 @@ impl Board {
     }
   }
 
+  pub fn is_in_check(&self, king_color: &Color) -> bool {
+    let king_pos: &Square = self.squares.iter()
+        .filter(|sq| sq.get_piece().is_some())
+        .filter(|sq| *sq.get_piece().as_ref().unwrap().get_short_name().to_lowercase() == *"k")
+        .filter(|sq| *sq.get_piece().as_ref().unwrap().get_color() == *king_color)
+        .collect::<Vec<&Square>>()[0];
+
+    let attacker_color = if *king_color == Color::White { Color::Black } else { Color::White };
+    let attacker_squares: Vec<&Square> = self.squares.iter()
+        .filter(|sq| sq.get_piece().is_some() && *sq.get_piece().as_ref().unwrap().get_color() == attacker_color)
+        .collect();
+
+    for square in attacker_squares {
+      let piece = square.get_piece().as_ref().unwrap();
+      for attack in &piece.get_moves(&self, square.get_coord()) {
+        if *attack == *king_pos.get_coord() { return true; }
+      }
+    }
+
+    false
+  }
+
   /// Returns a [`Square`](`crate::board::Square`) given the coordinates.
   /// The coordinates assume a chess player's perspective, and is not zero-indexed.
   /// For example, the coordinates (1, 8) would map to A8.
@@ -680,38 +708,28 @@ impl Board {
 mod tests {
   use super::{*};
 
-  fn make_standard_board() -> Board {
-    Board::new()
-  }
-
-  #[test]
-  fn test_draw_board() {
-    let board = make_standard_board();
-    println!("{}", board);
-  }
-
   #[test]
   fn test_dark_square_returns_dark() {
-    let dark_square = Square::new(SquareColor::Dark, None);
+    let dark_square = Square::new(SquareColor::Dark, Coordinate { file: File::A, rank: Rank::One }, None);
     assert_eq!(*dark_square.get_color(), SquareColor::Dark);
   }
 
   #[test]
   fn test_light_square_returns_light() {
-    let light_square = Square::new(SquareColor::Light, None);
+    let light_square = Square::new(SquareColor::Light, Coordinate { file: File::A, rank: Rank::Two },None);
     assert_eq!(*light_square.get_color(), SquareColor::Light);
   }
 
   #[test]
   fn test_square_a1_is_dark() {
-    let board = make_standard_board();
+    let board = Board::new();
     let square_a1 = board.get_square(Coordinate { file: File::A, rank: Rank::One }).unwrap();
     assert_eq!(*square_a1.get_color(), SquareColor::Dark);
   }
 
   #[test]
   fn test_square_c2_is_light() {
-    let board = make_standard_board();
+    let board = Board::new();
     let square_c2 = board.get_square(Coordinate { file: File::C, rank: Rank::Two }).unwrap();
     assert_eq!(*square_c2.get_color(), SquareColor::Light);
   }
@@ -724,7 +742,6 @@ mod tests {
     assert!(board.get_en_passant_target().is_none());
     assert_eq!(board.get_half_move_clock(), 0);
     assert_eq!(board.get_full_move(), 1);
-    println!("{}", board);
   }
 
   #[test]
@@ -741,7 +758,6 @@ mod tests {
     assert_eq!(board.get_en_passant_target().unwrap(), Coordinate { file: File::E, rank: Rank::Three });
     assert_eq!(board.get_half_move_clock(), 0);
     assert_eq!(board.get_full_move(), 1);
-    println!("{}", board)
   }
 
   #[test]
@@ -758,7 +774,6 @@ mod tests {
     assert!(board.get_en_passant_target().is_none());
     assert_eq!(board.get_half_move_clock(), 1);
     assert_eq!(board.get_full_move(), 37);
-    println!("{}", board)
   }
 
   #[test]
@@ -797,7 +812,7 @@ mod tests {
 
   #[test]
   fn test_get_piece_at_c1_white_bishop() {
-    let board = make_standard_board();
+    let board = Board::new();
     let square = board.get_square(Coordinate { file: File::C, rank:Rank::One }).unwrap();
 
     let piece = square.piece.as_ref().unwrap();
@@ -807,11 +822,27 @@ mod tests {
 
   #[test]
   fn test_get_piece_at_g7_black_pawn() {
-    let board = make_standard_board();
+    let board = Board::new();
     let square = board.get_square(Coordinate { file: File::G, rank:Rank::Seven }).unwrap();
 
     let piece = square.piece.as_ref().unwrap();
     assert_eq!(*piece.get_color(), Color::Black);
     assert_eq!(piece.get_short_name(), "P");
+  }
+
+  #[test]
+  fn test_neither_in_check_at_game_start() {
+    let board = Board::new();
+
+    assert!(!board.is_in_check(&Color::White));
+    assert!(!board.is_in_check(&Color::Black));
+  }
+
+  #[test]
+  fn test_white_is_in_check() {
+    let board = Board::from_fen_string("rnbqk1nr/pppp1ppp/8/4P3/1b6/8/PPP1PPPP/RNBQKBNR w KQkq - 1 3").unwrap();
+
+    assert!(board.is_in_check(&Color::White));
+    assert!(!board.is_in_check(&Color::Black));
   }
 }

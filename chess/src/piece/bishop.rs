@@ -1,5 +1,4 @@
 use crate::piece::{*};
-use crate::board::{File, Rank};
 
 pub struct Bishop { color: Color }
 impl Bishop {

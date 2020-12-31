@@ -39,6 +39,7 @@ impl Piece for Pawn {
 
     let capture_squares: Vec<Coordinate> = vec![*own_coords + (1, forward), *own_coords + (-1, forward)];
     for capture in capture_squares {
+      if !capture.is_valid() { continue; }
       match board.get_square(capture) {
         Ok(_) if board.can_capture(&capture, &self.color) => { potential_moves.push(capture); },
         Ok(_) if board.get_en_passant_target().as_ref().is_some() && board.get_en_passant_target().as_ref().unwrap() == &capture => { potential_moves.push(capture); }
