@@ -637,17 +637,13 @@ impl Board {
 
     let attacker_color = if *king_color == Color::White { Color::Black } else { Color::White };
     let attacker_squares: Vec<&Square> = self.squares.iter()
-        .filter(|sq| sq.get_piece().is_some() && *sq.get_piece().as_ref().unwrap().get_color() == attacker_color)
+        .filter(|sq| sq.get_piece().is_some())
+        .filter(|sq| *sq.get_piece().as_ref().unwrap().get_color() == attacker_color)
         .collect();
 
-    for square in attacker_squares {
-      let piece = square.get_piece().as_ref().unwrap();
-      for attack in &piece.get_moves(&self) {
-        if *attack == *king_pos.get_coord() { return true; }
-      }
-    }
-
-    false
+    attacker_squares.iter()
+        .flat_map(|sq| sq.get_piece().as_ref().unwrap().get_moves(&self))
+        .any(|move_coord| move_coord == *king_pos.get_coord())
   }
 
   /// Returns a [`Square`](`crate::board::Square`) given the coordinates.
