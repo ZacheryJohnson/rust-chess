@@ -17,28 +17,28 @@ impl Piece for Pawn {
 
   fn get_short_name(&self) -> &'static str { "P" }
 
-  fn get_moves(&self, board: &Board, own_coords: &Coordinate) -> Vec<Coordinate> {
+  fn get_moves(&self, board: &Board) -> Vec<Coordinate> {
     let forward: i8 = if self.color == Color::White { 1 } else { -1 };
     let forward_move: (i8, i8) = (0, forward);
 
     let mut potential_moves: Vec<Coordinate> = vec!();
 
-    let one_square_move = *own_coords + forward_move;
+    let one_square_move = self.position + forward_move;
     match board.get_square(one_square_move) {
       Ok(square) if square.get_piece().as_ref().is_none() => { potential_moves.push(one_square_move); },
       _ => {}
     }
 
     // Pawns that haven't moved yet can move two squares
-    if *self.get_color() == Color::White && own_coords.rank == Rank::Two || *self.get_color() == Color::Black && own_coords.rank == Rank::Seven {
-      let two_square_move = *own_coords + (0, forward * 2);
+    if *self.get_color() == Color::White && self.position.rank == Rank::Two || *self.get_color() == Color::Black && self.position.rank == Rank::Seven {
+      let two_square_move = self.position + (0, forward * 2);
       match board.get_square(two_square_move) {
         Ok(square) if square.get_piece().as_ref().is_none() => { potential_moves.push(two_square_move); },
         _ => {}
       }
     }
 
-    let capture_squares: Vec<Coordinate> = vec![*own_coords + (1, forward), *own_coords + (-1, forward)];
+    let capture_squares: Vec<Coordinate> = vec![self.position + (1, forward), self.position + (-1, forward)];
     for capture in capture_squares {
       if !capture.is_valid() { continue; }
       match board.get_square(capture) {
@@ -61,9 +61,9 @@ mod tests {
     let board = Board::new();
     let coords = Coordinate { file: File::C, rank: Rank::Two };
     let moves = board
-      .get_square(coords.clone()).unwrap()
+      .get_square(coords).unwrap()
       .get_piece().as_ref().unwrap()
-      .get_moves(&board, &coords);
+      .get_moves(&board);
 
     assert_eq!(moves.len(), 2);
     assert!(moves.contains(&Coordinate { file: File::C, rank: Rank::Three }));
@@ -75,9 +75,9 @@ mod tests {
     let board = Board::new();
     let coords = Coordinate { file: File::F, rank: Rank::Seven };
     let moves = board
-      .get_square(coords.clone()).unwrap()
+      .get_square(coords).unwrap()
       .get_piece().as_ref().unwrap()
-      .get_moves(&board, &coords);
+      .get_moves(&board);
 
     assert_eq!(moves.len(), 2);
     assert!(moves.contains(&Coordinate { file: File::F, rank: Rank::Six }));
@@ -89,9 +89,9 @@ mod tests {
     let board = Board::from_fen_string("rnbqkbnr/pppp1ppp/8/4p3/3P4/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 2").unwrap();
     let coords = Coordinate { file: File::D, rank: Rank::Four };
     let moves = board
-      .get_square(coords.clone()).unwrap()
+      .get_square(coords).unwrap()
       .get_piece().as_ref().unwrap()
-      .get_moves(&board, &coords);
+      .get_moves(&board);
 
     assert_eq!(moves.len(), 2);
     assert!(moves.contains(&Coordinate { file: File::D, rank: Rank::Five }));
@@ -103,9 +103,9 @@ mod tests {
     let board = Board::from_fen_string("rnbqkbnr/1ppppppp/8/4P3/p2P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 3").unwrap();
     let coords = Coordinate { file: File::D, rank: Rank::Four };
     let moves = board
-      .get_square(coords.clone()).unwrap()
+      .get_square(coords).unwrap()
       .get_piece().as_ref().unwrap()
-      .get_moves(&board, &coords);
+      .get_moves(&board);
 
     assert_eq!(moves.len(), 1);
     assert!(moves.contains(&Coordinate { file: File::D, rank: Rank::Five }));
@@ -117,9 +117,9 @@ mod tests {
     let board = Board::from_fen_string("rnbqkbnr/ppp2ppp/3p4/3Pp3/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 3").unwrap();
     let coords = Coordinate { file: File::D, rank: Rank::Five };
     let moves = board
-      .get_square(coords.clone()).unwrap()
+      .get_square(coords).unwrap()
       .get_piece().as_ref().unwrap()
-      .get_moves(&board, &coords);
+      .get_moves(&board);
 
     assert_eq!(moves.len(), 1);
     assert!(moves.contains(&Coordinate { file: File::E, rank: Rank::Six })); // En passant capture

@@ -16,10 +16,10 @@ impl Piece for Rook {
 
   fn get_short_name(&self) -> &'static str { "R" }
 
-  fn get_moves(&self, board: &Board, own_coords: &Coordinate) -> Vec<Coordinate> {
+  fn get_moves(&self, board: &Board) -> Vec<Coordinate> {
     let mut potential_moves: Vec<Coordinate> = vec!();
     for i in 1..8 {
-      match *own_coords + (0, i) {
+      match self.position + (0, i) {
         coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => { break; },
@@ -27,7 +27,7 @@ impl Piece for Rook {
     }
 
     for i in 1..8 {
-      match *own_coords + (0, -i) {
+      match self.position + (0, -i) {
         coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => { break; },
@@ -35,7 +35,7 @@ impl Piece for Rook {
     }
 
     for i in 1..8 {
-      match *own_coords + (i, 0) {
+      match self.position + (i, 0) {
         coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => { break; },
@@ -43,7 +43,7 @@ impl Piece for Rook {
     }
 
     for i in 1..8 {
-      match *own_coords + (-i, 0) {
+      match self.position + (-i, 0) {
         coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => {break;},
@@ -63,9 +63,9 @@ mod tests {
     let board = Board::new();
     let coords = Coordinate { file: File::F, rank: Rank::One };
     let moves = board
-      .get_square(coords.clone()).unwrap()
+      .get_square(coords).unwrap()
       .get_piece().as_ref().unwrap()
-      .get_moves(&board, &coords);
+      .get_moves(&board);
 
     assert_eq!(moves.len(), 0);
   }
@@ -75,9 +75,9 @@ mod tests {
     let board = Board::from_fen_string("rnbqkbnr/pp3ppp/4p3/2pp4/P7/3R4/1PPPPPPP/1NBQKBNR w Kkq - 0 4").unwrap();
     let coords = Coordinate { file: File::D, rank: Rank::Three };
     let moves = board
-      .get_square(coords.clone()).unwrap()
+      .get_square(coords).unwrap()
       .get_piece().as_ref().unwrap()
-      .get_moves(&board, &coords);
+      .get_moves(&board);
 
     assert_eq!(moves.len(), 9);
     assert!(moves.contains(&Coordinate { file: File::A, rank: Rank::Three }));

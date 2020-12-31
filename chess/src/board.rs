@@ -642,7 +642,7 @@ impl Board {
 
     for square in attacker_squares {
       let piece = square.get_piece().as_ref().unwrap();
-      for attack in &piece.get_moves(&self, square.get_coord()) {
+      for attack in &piece.get_moves(&self) {
         if *attack == *king_pos.get_coord() { return true; }
       }
     }

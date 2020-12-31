@@ -34,5 +34,5 @@ pub trait Piece {
   fn get_short_name(&self) -> &'static str;
 
   /// Returns the legal moves a piece can make given the board state and it's own coordinates.
-  fn get_moves(&self, board: &Board, own_coords: &Coordinate) -> Vec<Coordinate>;
+  fn get_moves(&self, board: &Board) -> Vec<Coordinate>;
 }
