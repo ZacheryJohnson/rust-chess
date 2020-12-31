@@ -2,17 +2,18 @@ use crate::piece::{*};
 use crate::board::Rank;
 
 pub struct Pawn {
-  color: Color
-}
-
-impl Pawn {
-  pub fn new(color: Color) -> Pawn {
-    Pawn { color }
-  }
+  color: Color,
+  position: Coordinate,
 }
 
 impl Piece for Pawn {
+  fn new(color: Color, position: Coordinate) -> Self {
+    Pawn { color, position }
+  }
+
   fn get_color(&self) -> &Color { &self.color }
+
+  fn get_position(&self) -> &Coordinate { &self.position }
 
   fn get_short_name(&self) -> &'static str { "P" }
 

@@ -7,7 +7,7 @@ pub mod rook;
 
 use std::fmt::Display;
 use std::fmt;
-use crate::board::{Coordinate, Board};
+use crate::board::{Board, Coordinate};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Color {
@@ -25,7 +25,11 @@ impl Display for Color {
 }
 
 pub trait Piece {
+  fn new(color: Color, position: Coordinate) -> Self where Self: Sized;
+
   fn get_color(&self) -> &Color;
+
+  fn get_position(&self) -> &Coordinate;
 
   fn get_short_name(&self) -> &'static str;
 

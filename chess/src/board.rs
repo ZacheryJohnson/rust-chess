@@ -36,21 +36,60 @@ impl fmt::Display for SquareColor {
   }
 }
 
-/// Individual square on a [`Board`](`crate::board::Board`). Only has a color.
+fn make_piece_at_coord(coord: Coordinate) -> Option<Box<dyn Piece>>{
+  match (coord.file, coord.rank) {
+    (File::A, Rank::One) => Some(Box::new(Rook::new(Color::White, coord))),
+    (File::B, Rank::One) => Some(Box::new(Knight::new(Color::White, coord))),
+    (File::C, Rank::One) => Some(Box::new(Bishop::new(Color::White, coord))),
+    (File::D, Rank::One) => Some(Box::new(Queen::new(Color::White, coord))),
+    (File::E, Rank::One) => Some(Box::new(King::new(Color::White, coord))),
+    (File::F, Rank::One) => Some(Box::new(Bishop::new(Color::White, coord))),
+    (File::G, Rank::One) => Some(Box::new(Knight::new(Color::White, coord))),
+    (File::H, Rank::One) => Some(Box::new(Rook::new(Color::White, coord))),
+    (File::A, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+    (File::B, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+    (File::C, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+    (File::D, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+    (File::E, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+    (File::F, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+    (File::G, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+    (File::H, Rank::Two) => Some(Box::new(Pawn::new(Color::White, coord))),
+
+    (File::A, Rank::Eight) => Some(Box::new(Rook::new(Color::Black, coord))),
+    (File::B, Rank::Eight) => Some(Box::new(Knight::new(Color::Black, coord))),
+    (File::C, Rank::Eight) => Some(Box::new(Bishop::new(Color::Black, coord))),
+    (File::D, Rank::Eight) => Some(Box::new(Queen::new(Color::Black, coord))),
+    (File::E, Rank::Eight) => Some(Box::new(King::new(Color::Black, coord))),
+    (File::F, Rank::Eight) => Some(Box::new(Bishop::new(Color::Black, coord))),
+    (File::G, Rank::Eight) => Some(Box::new(Knight::new(Color::Black, coord))),
+    (File::H, Rank::Eight) => Some(Box::new(Rook::new(Color::Black, coord))),
+    (File::A, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    (File::B, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    (File::C, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    (File::D, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    (File::E, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    (File::F, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    (File::G, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    (File::H, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
+    _ => None
+  }
+}
+
+/// Individual square on a [`Board`](`crate::board::Board`).
 pub struct Square {
   color: SquareColor,
   coord: Coordinate,
-  piece: Option<Box<dyn Piece>>
+  piece: Option<Box<dyn Piece>>,
 }
 
 impl Square {
   /// Creates a [`Square`](`crate::board::Square`)
   /// with a given [`SquareColor`](`crate::board::SquareColor`).
-  pub fn new(color: SquareColor, coord: Coordinate, piece: Option<Box<dyn Piece>>) -> Square {
+  pub fn new(color: SquareColor, coord: Coordinate) -> Square {
     Square {
       color,
       coord,
-      piece
+      piece: None
     }
   }
 
@@ -60,6 +99,8 @@ impl Square {
   pub fn get_coord(&self) -> &Coordinate { &self.coord }
 
   pub fn get_piece(&self) -> &Option<Box<dyn Piece>> { &self.piece }
+
+  pub fn set_piece(&mut self, piece: Option<Box<dyn Piece>>) { self.piece = piece; }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd)]
@@ -254,45 +295,6 @@ impl Coordinate {
   }
 }
 
-fn get_piece_at_start_coord(coord: &Coordinate) -> Option<Box<dyn Piece>>{
-  match (coord.file, coord.rank) {
-    (File::A, Rank::One) => Some(Box::new(Rook::new(Color::White))),
-    (File::B, Rank::One) => Some(Box::new(Knight::new(Color::White))),
-    (File::C, Rank::One) => Some(Box::new(Bishop::new(Color::White))),
-    (File::D, Rank::One) => Some(Box::new(Queen::new(Color::White))),
-    (File::E, Rank::One) => Some(Box::new(King::new(Color::White))),
-    (File::F, Rank::One) => Some(Box::new(Bishop::new(Color::White))),
-    (File::G, Rank::One) => Some(Box::new(Knight::new(Color::White))),
-    (File::H, Rank::One) => Some(Box::new(Rook::new(Color::White))),
-    (File::A, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-    (File::B, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-    (File::C, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-    (File::D, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-    (File::E, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-    (File::F, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-    (File::G, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-    (File::H, Rank::Two) => Some(Box::new(Pawn::new(Color::White))),
-
-    (File::A, Rank::Eight) => Some(Box::new(Rook::new(Color::Black))),
-    (File::B, Rank::Eight) => Some(Box::new(Knight::new(Color::Black))),
-    (File::C, Rank::Eight) => Some(Box::new(Bishop::new(Color::Black))),
-    (File::D, Rank::Eight) => Some(Box::new(Queen::new(Color::Black))),
-    (File::E, Rank::Eight) => Some(Box::new(King::new(Color::Black))),
-    (File::F, Rank::Eight) => Some(Box::new(Bishop::new(Color::Black))),
-    (File::G, Rank::Eight) => Some(Box::new(Knight::new(Color::Black))),
-    (File::H, Rank::Eight) => Some(Box::new(Rook::new(Color::Black))),
-    (File::A, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    (File::B, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    (File::C, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    (File::D, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    (File::E, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    (File::F, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    (File::G, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    (File::H, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black))),
-    _ => None
-  }
-}
-
 fn make_coord(x: i8, y: i8) -> Coordinate {
   Coordinate { file: File::from(x + 1), rank: Rank::from(y + 1) }
 }
@@ -373,32 +375,6 @@ pub struct Board {
   full_move: i32,
 }
 
-impl fmt::Display for Board {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut str_output = String::new();
-
-    for y in (0..BOARD_HEIGHT).rev() {
-      for x in 0..BOARD_WIDTH {
-        let square = self.get_square_by_coords(x, y).unwrap();
-        match &square.piece {
-          Some(piece) => {
-            str_output += &format!("|{}{}", piece.get_color(), piece.get_short_name());
-          },
-          None => {
-            match square.get_color() {
-              SquareColor::Dark => { str_output.push_str("|::");},
-              SquareColor::Light => { str_output.push_str("|  ");},
-            }
-          },
-        };
-      }
-      str_output.push('\n');
-    }
-
-    write!(f, "{}", str_output)
-  }
-}
-
 impl Board {
   /// Creates a new chess board with the given dimensions.
   /// Board will always be rectangular (width * height).
@@ -409,8 +385,9 @@ impl Board {
     for y in 0..BOARD_HEIGHT {
       for x in 0..BOARD_WIDTH {
         let coord = make_coord(x, y);
-        let piece = get_piece_at_start_coord(&coord);
-        squares.push(Square::new(color, coord, piece));
+        let mut square = Square::new(color, coord);
+        square.set_piece(make_piece_at_coord(coord));
+        squares.push(square);
         color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
       }
 
@@ -429,7 +406,7 @@ impl Board {
   }
 
   /// Creates a board from a given FEN string.
-  pub fn from_fen_string(fen_string: &str) -> Result<Board, Error> {
+  pub fn from_fen_string(fen_string: &'static str) -> Result<Board, Error> {
     let fields: Vec<&str> = fen_string.split(" ").collect();
 
     if fields.len() != 6 {
@@ -446,26 +423,29 @@ impl Board {
     let mut color = SquareColor::Dark;
     for rank in ranks {
       let mut expected_pieces_remaining: i8 = 8;
-      for piece in rank.chars() {
+      for piece_char in rank.chars() {
         if expected_pieces_remaining <= 0 {
           println!("Found more pieces in a rank that was expecting!");
           return Err(Error::InvalidFENString);
         }
 
         let mut additional_empty_squares: i8 = 0;
-        let piece: Result<Option<Box<dyn Piece>>, Error> = match piece {
-          'p' => Ok(Some(Box::new(Pawn::new(Color::Black)))),
-          'r' => Ok(Some(Box::new(Rook::new(Color::Black)))),
-          'n' => Ok(Some(Box::new(Knight::new(Color::Black)))),
-          'b' => Ok(Some(Box::new(Bishop::new(Color::Black)))),
-          'q' => Ok(Some(Box::new(Queen::new(Color::Black)))),
-          'k' => Ok(Some(Box::new(King::new(Color::Black)))),
-          'P' => Ok(Some(Box::new(Pawn::new(Color::White)))),
-          'R' => Ok(Some(Box::new(Rook::new(Color::White)))),
-          'N' => Ok(Some(Box::new(Knight::new(Color::White)))),
-          'B' => Ok(Some(Box::new(Bishop::new(Color::White)))),
-          'Q' => Ok(Some(Box::new(Queen::new(Color::White)))),
-          'K' => Ok(Some(Box::new(King::new(Color::White)))),
+
+        let coord = make_coord(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
+        let mut square = Square::new(color, coord);
+        let piece: Result<Option<Box<dyn Piece>>, Error> = match piece_char {
+          'p' => Ok(Some(Box::new(Pawn::new(Color::Black, coord)))),
+          'r' => Ok(Some(Box::new(Rook::new(Color::Black, coord)))),
+          'n' => Ok(Some(Box::new(Knight::new(Color::Black, coord)))),
+          'b' => Ok(Some(Box::new(Bishop::new(Color::Black, coord)))),
+          'q' => Ok(Some(Box::new(Queen::new(Color::Black, coord)))),
+          'k' => Ok(Some(Box::new(King::new(Color::Black, coord)))),
+          'P' => Ok(Some(Box::new(Pawn::new(Color::White, coord)))),
+          'R' => Ok(Some(Box::new(Rook::new(Color::White, coord)))),
+          'N' => Ok(Some(Box::new(Knight::new(Color::White, coord)))),
+          'B' => Ok(Some(Box::new(Bishop::new(Color::White, coord)))),
+          'Q' => Ok(Some(Box::new(Queen::new(Color::White, coord)))),
+          'K' => Ok(Some(Box::new(King::new(Color::White, coord)))),
           '1' => { Ok(None) },
           '2' => { additional_empty_squares = 1; Ok(None) },
           '3' => { additional_empty_squares = 2; Ok(None) },
@@ -476,9 +456,8 @@ impl Board {
           '8' => { additional_empty_squares = 7; Ok(None) },
           _ => Err(Error::InvalidFENString),
         };
-
-        let coord = make_coord(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
-        squares.push(Square::new(color, coord, piece?));
+        square.set_piece(piece?);
+        squares.push(square);
         color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
         expected_pieces_remaining -= 1;
         square_idx += 1;
@@ -489,7 +468,8 @@ impl Board {
             return Err(Error::InvalidFENString);
           }
           let coord = make_coord(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
-          squares.push(Square::new(color, coord, None));
+          let square = Square::new(color, coord);
+          squares.push(square);
           color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
           expected_pieces_remaining -= 1;
           square_idx += 1;
@@ -548,14 +528,17 @@ impl Board {
       Err(_) => Err(Error::InvalidFENString),
     }?;
 
-    Ok(Board {
+
+    let board = Board {
       squares,
       active_color,
       castling_availability,
       en_passant_target,
       half_move_clock,
       full_move,
-    })
+    };
+
+    Ok(board)
   }
 
   pub fn to_fen_string(&self) -> String {
@@ -654,7 +637,7 @@ impl Board {
   }
 
   /// Returns true if a piece can move to a target coordinate given it's color
-  pub fn can_move(&self, target_coord: &Coordinate, mover_color: &Color) -> bool {
+  pub fn can_move(&self, target_coord: &Coordinate, _mover_color: &Color) -> bool {
     match self.get_square(*target_coord) {
       Ok(square) if square.get_piece().is_none() => true,
       _ => false,
@@ -707,18 +690,6 @@ impl Board {
 #[cfg(test)]
 mod tests {
   use super::{*};
-
-  #[test]
-  fn test_dark_square_returns_dark() {
-    let dark_square = Square::new(SquareColor::Dark, Coordinate { file: File::A, rank: Rank::One }, None);
-    assert_eq!(*dark_square.get_color(), SquareColor::Dark);
-  }
-
-  #[test]
-  fn test_light_square_returns_light() {
-    let light_square = Square::new(SquareColor::Light, Coordinate { file: File::A, rank: Rank::Two },None);
-    assert_eq!(*light_square.get_color(), SquareColor::Light);
-  }
 
   #[test]
   fn test_square_a1_is_dark() {

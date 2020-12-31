@@ -1,14 +1,18 @@
 use crate::piece::{*};
 
-pub struct Queen { color: Color }
-impl Queen {
-  pub fn new(color: Color) -> Queen {
-    Queen { color }
-  }
+pub struct Queen {
+  color: Color,
+  position: Coordinate,
 }
 
 impl Piece for Queen {
+  fn new(color: Color, position: Coordinate) -> Self {
+    Queen { color, position }
+  }
+
   fn get_color(&self) -> &Color { &self.color }
+
+  fn get_position(&self) -> &Coordinate { &self.position }
 
   fn get_short_name(&self) -> &'static str { "Q" }
 
