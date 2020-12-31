@@ -1,7 +1,22 @@
-use std::fmt;
 use std::collections::HashSet;
 
-use std::ops::{Add};
+pub mod square;
+
+use crate::board::square::{Square, SquareColor};
+
+pub mod file;
+
+use crate::board::file::File;
+
+pub mod rank;
+
+use crate::board::rank::Rank;
+
+pub mod coord;
+
+use crate::board::coord::Coordinate;
+
+use crate::errors::Error;
 
 use crate::piece::{Color, Piece};
 use crate::piece::bishop::Bishop;
@@ -14,29 +29,7 @@ use crate::piece::rook::Rook;
 const BOARD_WIDTH: i8 = 8;
 const BOARD_HEIGHT: i8 = 8;
 
-#[derive(Debug, PartialEq)]
-pub enum Error {
-  InvalidPositionString,
-  InvalidRawCoordinatePair,
-  InvalidFENString
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum SquareColor {
-  Light,
-  Dark,
-}
-
-impl fmt::Display for SquareColor {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.clone() {
-      SquareColor::Light => write!(f, "L"),
-      SquareColor::Dark => write!(f, "D"),
-    }
-  }
-}
-
-fn make_piece_at_coord(coord: Coordinate) -> Option<Box<dyn Piece>>{
+fn make_piece_at_coord(coord: Coordinate) -> Option<Box<dyn Piece>> {
   match (coord.file, coord.rank) {
     (File::A, Rank::One) => Some(Box::new(Rook::new(Color::White, coord))),
     (File::B, Rank::One) => Some(Box::new(Knight::new(Color::White, coord))),
@@ -73,266 +66,6 @@ fn make_piece_at_coord(coord: Coordinate) -> Option<Box<dyn Piece>>{
     (File::H, Rank::Seven) => Some(Box::new(Pawn::new(Color::Black, coord))),
     _ => None
   }
-}
-
-/// Individual square on a [`Board`](`crate::board::Board`).
-pub struct Square {
-  color: SquareColor,
-  coord: Coordinate,
-  piece: Option<Box<dyn Piece>>,
-}
-
-impl Square {
-  /// Creates a [`Square`](`crate::board::Square`)
-  /// with a given [`SquareColor`](`crate::board::SquareColor`).
-  pub fn new(color: SquareColor, coord: Coordinate) -> Square {
-    Square {
-      color,
-      coord,
-      piece: None
-    }
-  }
-
-  /// Returns the [`Square`](`crate::board::Square`)'s [`SquareColor`](`crate::board::SquareColor`).
-  pub fn get_color(&self) -> &SquareColor { &self.color }
-
-  pub fn get_coord(&self) -> &Coordinate { &self.coord }
-
-  pub fn get_piece(&self) -> &Option<Box<dyn Piece>> { &self.piece }
-
-  pub fn set_piece(&mut self, piece: Option<Box<dyn Piece>>) { self.piece = piece; }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd)]
-pub enum Rank {
-  One = 1,
-  Two = 2,
-  Three = 3,
-  Four = 4,
-  Five = 5,
-  Six = 6,
-  Seven = 7,
-  Eight = 8,
-  Invalid = std::isize::MAX,
-}
-
-impl fmt::Display for Rank {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.clone() {
-      Rank::One => write!(f, "1"),
-      Rank::Two => write!(f, "2"),
-      Rank::Three => write!(f, "3"),
-      Rank::Four => write!(f, "4"),
-      Rank::Five => write!(f, "5"),
-      Rank::Six => write!(f, "6"),
-      Rank::Seven => write!(f, "7"),
-      Rank::Eight => write!(f, "8"),
-      Rank::Invalid => write!(f, "!"),
-    }
-  }
-}
-
-impl Into<i8> for Rank {
-  fn into(self) -> i8 {
-    match self {
-      Rank::One => 1,
-      Rank::Two => 2,
-      Rank::Three => 3,
-      Rank::Four => 4,
-      Rank::Five => 5,
-      Rank::Six => 6,
-      Rank::Seven => 7,
-      Rank::Eight => 8,
-      Rank::Invalid => panic!("Trying to put invalid rank into i8"),
-    }
-  }
-}
-
-impl From<i8> for Rank {
-  fn from(x: i8) -> Self {
-    match x {
-      1 => Rank::One,
-      2 => Rank::Two,
-      3 => Rank::Three,
-      4 => Rank::Four,
-      5 => Rank::Five,
-      6 => Rank::Six,
-      7 => Rank::Seven,
-      8 => Rank::Eight,
-      _ => Rank::Invalid,
-    }
-  }
-}
-
-impl Into<&str> for Rank {
-  fn into(self) -> &'static str {
-    match self {
-      Rank::One => "1",
-      Rank::Two => "2",
-      Rank::Three => "3",
-      Rank::Four => "4",
-      Rank::Five => "5",
-      Rank::Six => "6",
-      Rank::Seven => "7",
-      Rank::Eight => "8",
-      _ => "INVALID"
-    }
-  }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd)]
-pub enum File {
-  A = 1,
-  B = 2,
-  C = 3,
-  D = 4,
-  E = 5,
-  F = 6,
-  G = 7,
-  H = 8,
-  Invalid = std::isize::MAX,
-}
-
-impl fmt::Display for File {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.clone() {
-      File::A => write!(f, "A"),
-      File::B => write!(f, "B"),
-      File::C => write!(f, "C"),
-      File::D => write!(f, "D"),
-      File::E => write!(f, "E"),
-      File::F => write!(f, "F"),
-      File::G => write!(f, "G"),
-      File::H => write!(f, "H"),
-      File::Invalid => write!(f, "!"),
-    }
-  }
-}
-
-impl Into<i8> for File {
-  fn into(self) -> i8 {
-    match self {
-      File::A => 1,
-      File::B => 2,
-      File::C => 3,
-      File::D => 4,
-      File::E => 5,
-      File::F => 6,
-      File::G => 7,
-      File::H => 8,
-      File::Invalid => panic!("Trying to put invalid file into i8"),
-    }
-  }
-}
-
-impl From<i8> for File {
-  fn from(x: i8) -> Self {
-    match x {
-      1 => File::A,
-      2 => File::B,
-      3 => File::C,
-      4 => File::D,
-      5 => File::E,
-      6 => File::F,
-      7 => File::G,
-      8 => File::H,
-      _ => File::Invalid,
-    }
-  }
-}
-
-impl Into<&str> for File {
-  fn into(self) -> &'static str {
-    match self {
-      File::A => "A",
-      File::B => "B",
-      File::C => "C",
-      File::D => "D",
-      File::E => "E",
-      File::F => "F",
-      File::G => "G",
-      File::H => "H",
-      _ => "INVALID"
-    }
-  }
-}
-
-#[derive(Clone, Copy, Debug, PartialOrd, PartialEq)]
-pub struct Coordinate {
-  pub file: File,
-  pub rank: Rank
-}
-
-impl fmt::Display for Coordinate {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}{}", Into::<&str>::into(self.file), Into::<&str>::into(self.rank))
-  }
-}
-
-impl Into<String> for Coordinate {
-  fn into(self) -> String {
-    let file_str: &str = self.file.into();
-    let rank_str: &str = self.rank.into();
-
-    String::from(file_str) + rank_str
-  }
-}
-
-impl Add<(i8, i8)> for Coordinate {
-  type Output = Self;
-
-  fn add(self, rhs: (i8, i8)) -> Self::Output {
-    Coordinate {
-      file: File::from(Into::<i8>::into(self.file) + rhs.0),
-      rank: Rank::from(Into::<i8>::into(self.rank) + rhs.1)
-    }
-  }
-}
-
-impl Coordinate {
-  pub fn is_valid(&self) -> bool {
-    self.file != File::Invalid && self.rank != Rank::Invalid
-  }
-}
-
-fn make_coord(x: i8, y: i8) -> Coordinate {
-  Coordinate { file: File::from(x + 1), rank: Rank::from(y + 1) }
-}
-
-/// Attempts to parse a board position `&str` into a
-  /// ([`Rank`](`crate::board::Rank`), [`File`](`crate::board::File`)) tuple.
-  /// A [`Error`](`crate::board::Error`) will be returned if the position fails
-  /// to parse.
-fn get_coordinate(position_str: &str) -> Result<Coordinate, Error> {
-  if position_str.len() != 2 {
-    return Err(Error::InvalidPositionString);
-  }
-
-  let file = match position_str.chars().nth(0) {
-    Some('a') | Some('A') => Ok(File::A),
-    Some('b') | Some('B') => Ok(File::B),
-    Some('c') | Some('C') => Ok(File::C),
-    Some('d') | Some('D') => Ok(File::D),
-    Some('e') | Some('E') => Ok(File::E),
-    Some('f') | Some('F') => Ok(File::F),
-    Some('g') | Some('G') => Ok(File::G),
-    Some('h') | Some('H') => Ok(File::H),
-    _ => Err(Error::InvalidPositionString)
-  }?;
-
-  let rank = match position_str.chars().nth(1) {
-    Some('1') => Ok(Rank::One),
-    Some('2') => Ok(Rank::Two),
-    Some('3') => Ok(Rank::Three),
-    Some('4') => Ok(Rank::Four),
-    Some('5') => Ok(Rank::Five),
-    Some('6') => Ok(Rank::Six),
-    Some('7') => Ok(Rank::Seven),
-    Some('8') => Ok(Rank::Eight),
-    _ => Err(Error::InvalidPositionString)
-  }?;
-
-  Ok(Coordinate{file, rank})
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -384,7 +117,7 @@ impl Board {
 
     for y in 0..BOARD_HEIGHT {
       for x in 0..BOARD_WIDTH {
-        let coord = make_coord(x, y);
+        let coord = Coordinate::make_coordinate(x, y);
         let mut square = Square::new(color, coord);
         square.set_piece(make_piece_at_coord(coord));
         squares.push(square);
@@ -401,7 +134,7 @@ impl Board {
       castling_availability: get_default_castling_availability(),
       en_passant_target: None,
       half_move_clock: 0,
-      full_move: 1
+      full_move: 1,
     }
   }
 
@@ -431,7 +164,7 @@ impl Board {
 
         let mut additional_empty_squares: i8 = 0;
 
-        let coord = make_coord(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
+        let coord = Coordinate::make_coordinate(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
         let mut square = Square::new(color, coord);
         let piece: Result<Option<Box<dyn Piece>>, Error> = match piece_char {
           'p' => Ok(Some(Box::new(Pawn::new(Color::Black, coord)))),
@@ -446,14 +179,35 @@ impl Board {
           'B' => Ok(Some(Box::new(Bishop::new(Color::White, coord)))),
           'Q' => Ok(Some(Box::new(Queen::new(Color::White, coord)))),
           'K' => Ok(Some(Box::new(King::new(Color::White, coord)))),
-          '1' => { Ok(None) },
-          '2' => { additional_empty_squares = 1; Ok(None) },
-          '3' => { additional_empty_squares = 2; Ok(None) },
-          '4' => { additional_empty_squares = 3; Ok(None) },
-          '5' => { additional_empty_squares = 4; Ok(None) },
-          '6' => { additional_empty_squares = 5; Ok(None) },
-          '7' => { additional_empty_squares = 6; Ok(None) },
-          '8' => { additional_empty_squares = 7; Ok(None) },
+          '1' => { Ok(None) }
+          '2' => {
+            additional_empty_squares = 1;
+            Ok(None)
+          }
+          '3' => {
+            additional_empty_squares = 2;
+            Ok(None)
+          }
+          '4' => {
+            additional_empty_squares = 3;
+            Ok(None)
+          }
+          '5' => {
+            additional_empty_squares = 4;
+            Ok(None)
+          }
+          '6' => {
+            additional_empty_squares = 5;
+            Ok(None)
+          }
+          '7' => {
+            additional_empty_squares = 6;
+            Ok(None)
+          }
+          '8' => {
+            additional_empty_squares = 7;
+            Ok(None)
+          }
           _ => Err(Error::InvalidFENString),
         };
         square.set_piece(piece?);
@@ -467,7 +221,7 @@ impl Board {
             println!("Found more pieces in a rank that was expecting!");
             return Err(Error::InvalidFENString);
           }
-          let coord = make_coord(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
+          let coord = Coordinate::make_coordinate(square_idx % BOARD_WIDTH, square_idx / BOARD_WIDTH);
           let square = Square::new(color, coord);
           squares.push(square);
           color = if color == SquareColor::Dark { SquareColor::Light } else { SquareColor::Dark };
@@ -484,11 +238,9 @@ impl Board {
     let active_color: Color = {
       if active_color_str == "w" || active_color_str == "W" {
         Ok(Color::White)
-      }
-      else if active_color_str == "b" || active_color_str == "B" {
+      } else if active_color_str == "b" || active_color_str == "B" {
         Ok(Color::Black)
-      }
-      else {
+      } else {
         Err(Error::InvalidFENString)
       }
     }?;
@@ -497,11 +249,23 @@ impl Board {
     let mut castling_availability = HashSet::new();
     for castle_char in castling_avail_str.chars() {
       let _ = match castle_char {
-        'K' => { castling_availability.insert(CastleAvailability::WhiteKingside); Ok(())},
-        'Q' => { castling_availability.insert(CastleAvailability::WhiteQueenside); Ok(())},
-        'k' => { castling_availability.insert(CastleAvailability::BlackKingside); Ok(())},
-        'q' => { castling_availability.insert(CastleAvailability::BlackQueenside); Ok(())},
-        '-' => { Ok(()) },
+        'K' => {
+          castling_availability.insert(CastleAvailability::WhiteKingside);
+          Ok(())
+        }
+        'Q' => {
+          castling_availability.insert(CastleAvailability::WhiteQueenside);
+          Ok(())
+        }
+        'k' => {
+          castling_availability.insert(CastleAvailability::BlackKingside);
+          Ok(())
+        }
+        'q' => {
+          castling_availability.insert(CastleAvailability::BlackQueenside);
+          Ok(())
+        }
+        '-' => { Ok(()) }
         _ => Err(Error::InvalidFENString),
       }?;
     }
@@ -510,9 +274,8 @@ impl Board {
     let en_passant_target: Option<Coordinate> = {
       if en_passant_str == "-" {
         Ok(None)
-      }
-      else {
-        Ok(Some(get_coordinate(en_passant_str)?))
+      } else {
+        Ok(Some(Coordinate::get_coordinate(en_passant_str)?))
       }
     }?;
 
@@ -548,7 +311,7 @@ impl Board {
       let mut consecutive_empty_squares: u8 = 0;
       for x in 0..BOARD_WIDTH {
         let square = self.get_square_by_coords(x, y).unwrap();
-        match &square.piece {
+        match &square.get_piece() {
           Some(piece) => {
             if consecutive_empty_squares > 0 {
               pieces_str += consecutive_empty_squares.to_string().as_str();
@@ -559,11 +322,10 @@ impl Board {
               Color::White => piece.get_short_name().to_uppercase(),
               Color::Black => piece.get_short_name().to_lowercase(),
             };
-
-          },
+          }
           None => {
             consecutive_empty_squares += 1;
-          },
+          }
         };
       }
       if consecutive_empty_squares > 0 {
@@ -578,9 +340,9 @@ impl Board {
 
     let active_color_str = if self.get_active_color() == Color::White { "w" } else { "b" };
 
-    let castle_avail_str =  get_castle_availability_str(&self.get_castling_availability());
+    let castle_avail_str = get_castle_availability_str(&self.get_castling_availability());
 
-    let en_passant_str =  match self.get_en_passant_target() {
+    let en_passant_str = match self.get_en_passant_target() {
       Some(coord) => Into::<String>::into(coord),
       None => String::from("-"),
     }.to_lowercase();
@@ -630,20 +392,20 @@ impl Board {
 
   pub fn is_in_check(&self, king_color: &Color) -> bool {
     let king_pos: &Square = self.squares.iter()
-        .filter(|sq| sq.get_piece().is_some())
-        .filter(|sq| *sq.get_piece().as_ref().unwrap().get_short_name().to_lowercase() == *"k")
-        .filter(|sq| *sq.get_piece().as_ref().unwrap().get_color() == *king_color)
-        .collect::<Vec<&Square>>()[0];
+      .filter(|sq| sq.get_piece().is_some())
+      .filter(|sq| *sq.get_piece().as_ref().unwrap().get_short_name().to_lowercase() == *"k")
+      .filter(|sq| *sq.get_piece().as_ref().unwrap().get_color() == *king_color)
+      .collect::<Vec<&Square>>()[0];
 
     let attacker_color = if *king_color == Color::White { Color::Black } else { Color::White };
     let attacker_squares: Vec<&Square> = self.squares.iter()
-        .filter(|sq| sq.get_piece().is_some())
-        .filter(|sq| *sq.get_piece().as_ref().unwrap().get_color() == attacker_color)
-        .collect();
+      .filter(|sq| sq.get_piece().is_some())
+      .filter(|sq| *sq.get_piece().as_ref().unwrap().get_color() == attacker_color)
+      .collect();
 
     attacker_squares.iter()
-        .flat_map(|sq| sq.get_piece().as_ref().unwrap().get_moves(&self))
-        .any(|move_coord| move_coord == *king_pos.get_coord())
+      .flat_map(|sq| sq.get_piece().as_ref().unwrap().get_moves(&self))
+      .any(|move_coord| move_coord == *king_pos.get_coord())
   }
 
   /// Returns a [`Square`](`crate::board::Square`) given the coordinates.
@@ -728,45 +490,11 @@ mod tests {
   }
 
   #[test]
-  fn test_get_coordinate_a1_success() {
-    let coord = get_coordinate("A1").unwrap();
-    assert_eq!(coord.file, File::A);
-    assert_eq!(coord.rank, Rank::One);
-  }
-
-  #[test]
-  fn test_get_coordinate_h8_success() {
-    let coord = get_coordinate("H8").unwrap();
-    assert_eq!(coord.file, File::H);
-    assert_eq!(coord.rank, Rank::Eight);
-  }
-
-  #[test]
-  fn test_get_coordinate_z5_invalid() {
-    assert_eq!(get_coordinate("Z5").err().unwrap(), Error::InvalidPositionString);
-  }
-
-  #[test]
-  fn test_get_coordinate_empty_string_invalid() {
-    assert_eq!(get_coordinate("").err().unwrap(), Error::InvalidPositionString);
-  }
-
-  #[test]
-  fn test_get_coordinate_a9_invalid() {
-    assert_eq!(get_coordinate("a9").err().unwrap(), Error::InvalidPositionString);
-  }
-
-  #[test]
-  fn test_get_coordinate_1010_invalid() {
-    assert_eq!(get_coordinate("1010").err().unwrap(), Error::InvalidPositionString);
-  }
-
-  #[test]
   fn test_get_piece_at_c1_white_bishop() {
     let board = Board::new();
-    let square = board.get_square(Coordinate { file: File::C, rank:Rank::One }).unwrap();
+    let square = board.get_square(Coordinate { file: File::C, rank: Rank::One }).unwrap();
 
-    let piece = square.piece.as_ref().unwrap();
+    let piece = square.get_piece().as_ref().unwrap();
     assert_eq!(*piece.get_color(), Color::White);
     assert_eq!(piece.get_short_name(), "B");
   }
@@ -774,9 +502,9 @@ mod tests {
   #[test]
   fn test_get_piece_at_g7_black_pawn() {
     let board = Board::new();
-    let square = board.get_square(Coordinate { file: File::G, rank:Rank::Seven }).unwrap();
+    let square = board.get_square(Coordinate { file: File::G, rank: Rank::Seven }).unwrap();
 
-    let piece = square.piece.as_ref().unwrap();
+    let piece = square.get_piece().as_ref().unwrap();
     assert_eq!(*piece.get_color(), Color::Black);
     assert_eq!(piece.get_short_name(), "P");
   }

@@ -7,7 +7,7 @@ pub mod rook;
 
 use std::fmt::Display;
 use std::fmt;
-use crate::board::{Board, Coordinate};
+use crate::board::{Board, coord::Coordinate};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Color {

@@ -56,7 +56,7 @@ impl Piece for Rook {
 
 #[cfg(test)]
 mod tests {
-  use crate::board::{*};
+  use crate::board::{Board, coord::Coordinate, file::File, rank::Rank};
 
   #[test]
   fn test_get_starting_moves_empty() {
