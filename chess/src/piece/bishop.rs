@@ -20,7 +20,7 @@ impl Piece for Bishop {
     let mut potential_moves: Vec<Coordinate> = vec!();
     for i in 1..8 {
       match self.position + (i, i) {
-        coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+        coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => { break; },
       }
@@ -28,7 +28,7 @@ impl Piece for Bishop {
 
     for i in 1..8 {
       match self.position + (i, -i) {
-        coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+        coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => { break; },
       }
@@ -36,7 +36,7 @@ impl Piece for Bishop {
 
     for i in 1..8 {
       match self.position + (-i, i) {
-        coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+        coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => { break; },
       }
@@ -44,7 +44,7 @@ impl Piece for Bishop {
 
     for i in 1..8 {
       match self.position + (-i, -i) {
-        coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+        coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
         coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); break; },
         _ => {break;},
       }

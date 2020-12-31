@@ -621,7 +621,7 @@ impl Board {
   }
 
   /// Returns true if a piece can move to a target coordinate given it's color
-  pub fn can_move(&self, target_coord: &Coordinate, _mover_color: &Color) -> bool {
+  pub fn can_move(&self, target_coord: &Coordinate) -> bool {
     match self.get_square(*target_coord) {
       Ok(square) if square.get_piece().is_none() => true,
       _ => false,

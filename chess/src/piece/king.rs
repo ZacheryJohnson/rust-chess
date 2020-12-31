@@ -20,49 +20,49 @@ impl Piece for King {
     let mut potential_moves: Vec<Coordinate> = vec!();
 
     match self.position + (0, 1) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
 
     match self.position + (0, -1) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
 
     match self.position + (1, 0) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
 
     match self.position + (-1, 0) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
 
     match self.position + (1, 1) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
 
     match self.position + (1, -1) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
 
     match self.position + (-1, 1) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
 
     match self.position + (-1, -1) {
-      coord if coord.is_valid() && board.can_move(&coord, &self.color) => { potential_moves.push(coord); },
+      coord if coord.is_valid() && board.can_move(&coord) => { potential_moves.push(coord); },
       coord if coord.is_valid() && board.can_capture(&coord, &self.color) => { potential_moves.push(coord); },
       _ => {},
     }
