@@ -542,9 +542,8 @@ impl Board {
   }
 
   pub fn to_fen_string(&self) -> String {
-    let mut fen_string = String::new();
-
     // Pieces
+    let mut pieces_str = String::new();
     for y in (0..BOARD_HEIGHT).rev() {
       let mut consecutive_empty_squares: u8 = 0;
       for x in 0..BOARD_WIDTH {
@@ -552,11 +551,11 @@ impl Board {
         match &square.piece {
           Some(piece) => {
             if consecutive_empty_squares > 0 {
-              fen_string += consecutive_empty_squares.to_string().as_str();
+              pieces_str += consecutive_empty_squares.to_string().as_str();
             }
             consecutive_empty_squares = 0;
 
-            fen_string += &match piece.get_color() {
+            pieces_str += &match piece.get_color() {
               Color::White => piece.get_short_name().to_uppercase(),
               Color::Black => piece.get_short_name().to_lowercase(),
             };
@@ -568,44 +567,29 @@ impl Board {
         };
       }
       if consecutive_empty_squares > 0 {
-        fen_string += consecutive_empty_squares.to_string().as_str();
+        pieces_str += consecutive_empty_squares.to_string().as_str();
       }
 
-      fen_string.push('/');
+      pieces_str.push('/');
     }
 
     // Remove extra / at end
-    fen_string.pop();
+    pieces_str.pop();
 
-    fen_string += " ";
+    let active_color_str = if self.get_active_color() == Color::White { "w" } else { "b" };
 
-    // Active color
-    fen_string += if self.get_active_color() == Color::White { "w" } else { "b" };
+    let castle_avail_str =  get_castle_availability_str(&self.get_castling_availability());
 
-    fen_string += " ";
-
-    // Active castling availability
-    fen_string += get_castle_availability_str(&self.get_castling_availability()).as_str();
-
-    fen_string += " ";
-
-    // En passant target
-    fen_string += match self.get_en_passant_target() {
+    let en_passant_str =  match self.get_en_passant_target() {
       Some(coord) => Into::<String>::into(coord),
       None => String::from("-"),
-    }.to_lowercase().as_str();
+    }.to_lowercase();
 
-    fen_string += " ";
+    let half_move_str = self.get_half_move_clock().to_string();
 
-    // Half move clock
-    fen_string += self.get_half_move_clock().to_string().as_str();
+    let full_move_str = self.get_full_move().to_string();
 
-    fen_string += " ";
-
-    // Full move
-    fen_string += self.get_full_move().to_string().as_str();
-
-    fen_string
+    format!("{} {} {} {} {} {}", pieces_str, active_color_str, castle_avail_str, en_passant_str, half_move_str, full_move_str)
   }
 
   pub fn get_active_color(&self) -> Color {
