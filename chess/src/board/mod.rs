@@ -1,19 +1,15 @@
 use std::collections::HashSet;
 
 pub mod square;
-
 use crate::board::square::{Square, SquareColor};
 
 pub mod file;
-
 use crate::board::file::File;
 
 pub mod rank;
-
 use crate::board::rank::Rank;
 
 pub mod coord;
-
 use crate::board::coord::Coordinate;
 
 use crate::errors::Error;
@@ -351,7 +347,13 @@ impl Board {
 
     let full_move_str = self.get_full_move().to_string();
 
-    format!("{} {} {} {} {} {}", pieces_str, active_color_str, castle_avail_str, en_passant_str, half_move_str, full_move_str)
+    format!("{} {} {} {} {} {}",
+      pieces_str,
+      active_color_str,
+      castle_avail_str,
+      en_passant_str,
+      half_move_str,
+      full_move_str)
   }
 
   pub fn get_active_color(&self) -> Color {
